@@ -66,24 +66,6 @@ All these values live in `js/config.js`.
 
 To avoid overfitting and hindsight bias, define a batch size before changing the algorithm (for example, review after 25 or 50 cases). Keep algorithm versions distinct.
 
-## GitHub Pages deployment
-
-### Option A — GitHub Pages from branch
-
-1. Create a new GitHub repository.
-2. Upload the contents of this folder to the repository root.
-3. In GitHub, open **Settings → Pages**.
-4. Under **Build and deployment**, choose **Deploy from a branch**.
-5. Choose `main` and `/ (root)`.
-6. Save.
-7. Open the generated Pages URL in Safari.
-8. On iPhone: **Share → Add to Home Screen**.
-
-### Option B — Included GitHub Actions workflow
-
-The repository includes `.github/workflows/pages.yml`.  
-If you prefer GitHub Actions deployment, set Pages to use **GitHub Actions** in repository settings.
-
 ## Offline behavior
 
 After the app loads successfully once, the service worker caches the app shell. Saved cases use the browser's `localStorage`.

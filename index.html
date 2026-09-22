@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111111" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Dioptra" />
+  <title>Project Dioptra</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="assets/icon-192.png" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">PROJECT DIOPTRA</p>
+        <h1>Blind Rx Predictor</h1>
+      </div>
+      <button id="exportBtn" class="button secondary">Export CSV</button>
+    </header>
+
+    <main>
+      <section class="notice">
+        <strong>Research prototype only.</strong>
+        Do not use this tool as the sole basis for prescribing or dispensing. Final clinical decisions remain with the optometrist.
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <h2>1. Pre-refraction input</h2>
+            <p>Enter objective data before subjective refraction.</p>
+          </div>
+          <button id="newCaseBtn" class="button tertiary">New case</button>
+        </div>
+
+        <div class="grid two">
+          <label>
+            <span>Case ID</span>
+            <input id="caseId" type="text" readonly />
+          </label>
+          <label>
+            <span>Age</span>
+            <input id="age" type="number" inputmode="numeric" min="1" max="120" placeholder="e.g. 47" />
+          </label>
+        </div>
+
+        <div class="eye-grid">
+          <fieldset>
+            <legend>Right eye (OD)</legend>
+            <div class="rx-grid">
+              <label><span>SPH</span><input id="arOdSph" type="number" inputmode="decimal" step="0.25" placeholder="-2.50" /></label>
+              <label><span>CYL</span><input id="arOdCyl" type="number" inputmode="decimal" step="0.25" placeholder="-1.25" /></label>
+              <label><span>Axis</span><input id="arOdAxis" type="number" inputmode="numeric" min="1" max="180" step="1" placeholder="178" /></label>
+            </div>
+            <div class="va-grid">
+              <label><span>Distance VA</span><select id="vaOd"></select></label>
+              <label><span>Pinhole VA</span><select id="phOd"></select></label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Left eye (OS)</legend>
+            <div class="rx-grid">
+              <label><span>SPH</span><input id="arOsSph" type="number" inputmode="decimal" step="0.25" placeholder="-2.75" /></label>
+              <label><span>CYL</span><input id="arOsCyl" type="number" inputmode="decimal" step="0.25" placeholder="-1.00" /></label>
+              <label><span>Axis</span><input id="arOsAxis" type="number" inputmode="numeric" min="1" max="180" step="1" placeholder="168" /></label>
+            </div>
+            <div class="va-grid">
+              <label><span>Distance VA</span><select id="vaOs"></select></label>
+              <label><span>Pinhole VA</span><select id="phOs"></select></label>
+            </div>
+          </fieldset>
+        </div>
+
+        <details class="details-block">
+          <summary>Optional symptoms / notes</summary>
+          <div class="grid two">
+            <label><span>Primary symptom</span><input id="symptom" type="text" placeholder="Distance blur, headache, etc." /></label>
+            <label><span>Previous Rx known?</span>
+              <select id="previousRxKnown">
+                <option value="">Not recorded</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </label>
+          </div>
+        </details>
+
+        <button id="lockBtn" class="button primary full">Lock prediction</button>
+        <p id="lockStatus" class="status"></p>
+      </section>
+
+      <section id="finalSection" class="card hidden">
+        <div class="section-heading">
+          <div>
+            <h2>2. Your organic final Rx</h2>
+            <p>Enter your final prescription before revealing the algorithm result.</p>
+          </div>
+        </div>
+
+        <div class="eye-grid">
+          <fieldset>
+            <legend>Right eye (OD)</legend>
+            <div class="rx-grid">
+              <label><span>SPH</span><input id="finalOdSph" type="number" inputmode="decimal" step="0.25" /></label>
+              <label><span>CYL</span><input id="finalOdCyl" type="number" inputmode="decimal" step="0.25" /></label>
+              <label><span>Axis</span><select id="finalOdAxis"></select></label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Left eye (OS)</legend>
+            <div class="rx-grid">
+              <label><span>SPH</span><input id="finalOsSph" type="number" inputmode="decimal" step="0.25" /></label>
+              <label><span>CYL</span><input id="finalOsCyl" type="number" inputmode="decimal" step="0.25" /></label>
+              <label><span>Axis</span><select id="finalOsAxis"></select></label>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="grid two">
+          <label>
+            <span>Final ADD</span>
+            <select id="finalAdd"></select>
+          </label>
+          <label>
+            <span>Clinical note</span>
+            <input id="finalNote" type="text" placeholder="Optional" />
+          </label>
+        </div>
+
+        <button id="revealBtn" class="button primary full">Reveal & compare</button>
+      </section>
+
+      <section id="comparisonSection" class="card hidden">
+        <div class="section-heading">
+          <div>
+            <h2>3. Comparison</h2>
+            <p>Algorithm prediction vs. clinician endpoint.</p>
+          </div>
+        </div>
+        <div id="comparisonContent"></div>
+        <button id="saveCaseBtn" class="button primary full">Save case</button>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <h2>Study summary</h2>
+            <p>Stored locally on this device.</p>
+          </div>
+          <button id="clearDataBtn" class="button danger">Clear data</button>
+        </div>
+        <div id="stats" class="stats-grid"></div>
+      </section>
+
+      <section class="card compact">
+        <details>
+          <summary>Algorithm v0 assumptions</summary>
+          <div class="prose">
+            <p>
+              v0 is intentionally conservative and transparent. It predicts from pre-refraction data only,
+              quantizes final axis to 5° steps, and uses configurable heuristics rather than machine learning.
+            </p>
+            <p>
+              The purpose is to collect blinded comparison data. Do not tune the algorithm against individual cases
+              during a shift. Review changes only after a predefined batch of cases.
+            </p>
+          </div>
+        </details>
+      </section>
+    </main>
+
+    <footer>
+      <span>Project Dioptra · local-first research PWA</span>
+    </footer>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/algorithm.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

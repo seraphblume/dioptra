@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dioptra algorithm smoke tests</title>
+<style>
+body{font-family:system-ui;background:#111;color:#eee;padding:24px}
+.pass{color:#9dd9b0}.fail{color:#ff8b8b}code{background:#222;padding:2px 5px;border-radius:5px}
+</style>
+</head>
+<body>
+<h1>Project Dioptra smoke tests</h1>
+<div id="out"></div>
+<script src="../js/config.js"></script>
+<script src="../js/algorithm.js"></script>
+<script>
+const out = document.getElementById("out");
+function test(name, fn) {
+  try { fn(); out.innerHTML += `<p class="pass">PASS — ${name}</p>`; }
+  catch (e) { out.innerHTML += `<p class="fail">FAIL — ${name}: ${e.message}</p>`; }
+}
+function eq(a,b){ if(a!==b) throw new Error(`${a} !== ${b}`); }
+function near(a,b,t=1e-9){ if(Math.abs(a-b)>t) throw new Error(`${a} !~= ${b}`); }
+
+test("178° quantizes to 180°", () => eq(DioptraAlgorithm.quantizeAxis(178), 180));
+test("168° quantizes to 170°", () => eq(DioptraAlgorithm.quantizeAxis(168), 170));
+test("180° vs 5° circular error is 5°", () => eq(DioptraAlgorithm.axisDistance(180,5), 5));
+test("SE of -2.25 -1.00 is -2.75", () => near(DioptraAlgorithm.sphericalEquivalent(-2.25,-1.00), -2.75));
+test("47yo myope tentative add = +0.75", () => eq(DioptraAlgorithm.tentativeAdd(47,-2.25,-1.00), 0.75));
+test("52yo higher hyperope tentative add = +2.25", () => eq(DioptraAlgorithm.tentativeAdd(52,2.50,0), 2.25));
+</script>
+</body>
+</html>

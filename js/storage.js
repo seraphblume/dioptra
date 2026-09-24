@@ -26,6 +26,18 @@
     return text;
   }
 
+  function symptomValue(c, key) {
+    return c.input && c.input.symptoms && typeof c.input.symptoms[key] === "boolean"
+      ? c.input.symptoms[key]
+      : "";
+  }
+
+  function medicalValue(c, key) {
+    return c.input && c.input.medical && typeof c.input.medical[key] === "boolean"
+      ? c.input.medical[key]
+      : "";
+  }
+
   function toCSV(cases) {
     const headers = [
       "case_id","age","created_at","algorithm_version",
@@ -39,7 +51,12 @@
       "os_sph_error","os_cyl_error","os_axis_error",
       "od_exact","os_exact","od_within_025_sph","od_within_025_cyl","od_within_5_axis",
       "os_within_025_sph","os_within_025_cyl","os_within_5_axis",
-      "symptom","previous_rx_known","final_note"
+      "symptoms_text",
+      "symptom_tearing","symptom_blurred_vision","symptom_burning_irritation","symptom_itching",
+      "symptom_discharge","symptom_infection","symptom_headache","symptom_flashes","symptom_dry_eye",
+      "symptom_other","symptom_other_text",
+      "diabetes","hypertension","pregnancy",
+      "previous_rx_known","final_note"
     ];
 
     const rows = cases.map(c => [
@@ -55,7 +72,22 @@
       c.comparison.od.exact, c.comparison.os.exact,
       c.comparison.od.within025Sphere, c.comparison.od.within025Cylinder, c.comparison.od.within5Axis,
       c.comparison.os.within025Sphere, c.comparison.os.within025Cylinder, c.comparison.os.within5Axis,
-      c.input.symptom, c.input.previousRxKnown, c.actual.note
+      c.input.symptom || "",
+      symptomValue(c, "tearing"),
+      symptomValue(c, "blurredVision"),
+      symptomValue(c, "burningIrritation"),
+      symptomValue(c, "itching"),
+      symptomValue(c, "discharge"),
+      symptomValue(c, "infection"),
+      symptomValue(c, "headache"),
+      symptomValue(c, "flashes"),
+      symptomValue(c, "dryEye"),
+      symptomValue(c, "other"),
+      (c.input.symptoms && c.input.symptoms.otherText) || "",
+      medicalValue(c, "diabetes"),
+      medicalValue(c, "hypertension"),
+      medicalValue(c, "pregnancy"),
+      c.input.previousRxKnown, c.actual.note
     ]);
 
     return [headers, ...rows].map(r => r.map(csvEscape).join(",")).join("\n");

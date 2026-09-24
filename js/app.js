@@ -186,7 +186,7 @@
     try {
       lockedInput = input;
       lockedPrediction = alg.predictCase(input);
-      $("lockStatus").textContent = `Prediction locked at ${new Date(lockedPrediction.lockedAt).toLocaleTimeString()}.`;
+      $("lockStatus").textContent = `v${lockedPrediction.version} prediction locked at ${new Date(lockedPrediction.lockedAt).toLocaleTimeString()}.`;
       $("finalSection").classList.remove("hidden");
       $("lockBtn").disabled = true;
       $("finalSection").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -229,6 +229,17 @@
           <tr><td>ADD</td><td>${formatPower(lockedPrediction.tentativeAdd)}</td><td>${actual.add == null ? "—" : formatPower(actual.add)}</td><td>${addDelta == null ? "—" : formatPower(addDelta)}</td></tr>
         </tbody>
       </table>
+      <h3>Spherical-equivalent safeguard</h3>
+      <table class="compare-table">
+        <thead><tr><th>Eye</th><th>AR SE</th><th>Dioptra SE</th><th>Clinician SE</th><th>AR→D</th></tr></thead>
+        <tbody>
+          <tr><td>OD</td><td>${formatPower(lockedPrediction.od.raw.sphericalEquivalent)}</td><td>${formatPower(lockedPrediction.od.sphericalEquivalent)}</td><td>${formatPower(currentComparison.od.actualSE)}</td><td>${formatPower(lockedPrediction.od.seShiftFromAR)}</td></tr>
+          <tr><td>OS</td><td>${formatPower(lockedPrediction.os.raw.sphericalEquivalent)}</td><td>${formatPower(lockedPrediction.os.sphericalEquivalent)}</td><td>${formatPower(currentComparison.os.actualSE)}</td><td>${formatPower(lockedPrediction.os.seShiftFromAR)}</td></tr>
+        </tbody>
+      </table>
+      <p class="status">
+        SE error: OD ${formatPower(currentComparison.od.sphericalEquivalentError)} · OS ${formatPower(currentComparison.os.sphericalEquivalentError)}
+      </p>
       <p class="status">
         Exact-eye matches: OD ${currentComparison.od.exact ? "yes" : "no"} · OS ${currentComparison.os.exact ? "yes" : "no"}
       </p>

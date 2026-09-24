@@ -1,5 +1,6 @@
 (function () {
   const cfg = window.DIOPTRA_CONFIG;
+  const EPS = 1e-9;
 
   function roundToStep(value, step) {
     return Math.round((value + Number.EPSILON) / step) * step;
@@ -45,11 +46,6 @@
     };
   }
 
-  function vaDecimal(snellen) {
-    const row = cfg.visualAcuity.find(v => v.snellen === snellen);
-    return row ? row.decimal : null;
-  }
-
   function classifyRefractiveState(sph, cyl) {
     const se = sphericalEquivalent(sph, cyl);
     if (se <= cfg.refractiveBins.emmetropiaUpperSE) return "myopiaEmmetropia";
@@ -66,6 +62,74 @@
     return row[cls] ?? 0;
   }
 
+  function seDeviationStatus(delta) {
+    const magnitude = Math.abs(Number(delta));
+    if (!Number.isFinite(magnitude)) return "unknown";
+    if (magnitude <= cfg.seGuardrail.maxAutomaticShift + EPS) return "normal";
+    if (magnitude < cfg.seGuardrail.highDeviationThreshold - EPS) return "review";
+    return "high";
+  }
+
+  function enforceSEBudget(arSph, arCyl, proposedSph, proposedCyl) {
+    const arSE = sphericalEquivalent(arSph, arCyl);
+    const proposedSE = sphericalEquivalent(proposedSph, proposedCyl);
+    const proposedShift = proposedSE - arSE;
+    const maxShift = cfg.seGuardrail.maxAutomaticShift;
+
+    if (Math.abs(proposedShift) <= maxShift + EPS) {
+      return {
+        sphere: proposedSph,
+        arSE,
+        predictedSE: proposedSE,
+        shift: proposedShift,
+        applied: false,
+        requestedShift: proposedShift,
+        status: seDeviationStatus(proposedShift)
+      };
+    }
+
+    const direction = Math.sign(proposedShift);
+    const targetSE = arSE + direction * maxShift;
+    const idealSphere = targetSE - proposedCyl / 2;
+    const base = roundToStep(idealSphere, cfg.powerStep);
+    const candidates = [
+      base - 2 * cfg.powerStep,
+      base - cfg.powerStep,
+      base,
+      base + cfg.powerStep,
+      base + 2 * cfg.powerStep
+    ];
+
+    const allowed = candidates
+      .map(sphere => {
+        const se = sphericalEquivalent(sphere, proposedCyl);
+        return { sphere, se, shift: se - arSE };
+      })
+      .filter(x => Math.abs(x.shift) <= maxShift + EPS)
+      .sort((a, b) => {
+        const aTarget = Math.abs(a.se - targetSE);
+        const bTarget = Math.abs(b.se - targetSE);
+        if (Math.abs(aTarget - bTarget) > EPS) return aTarget - bTarget;
+        return Math.abs(a.sphere - proposedSph) - Math.abs(b.sphere - proposedSph);
+      });
+
+    const chosen = allowed[0] || {
+      sphere: arSph,
+      se: sphericalEquivalent(arSph, proposedCyl),
+      shift: sphericalEquivalent(arSph, proposedCyl) - arSE
+    };
+
+    return {
+      sphere: roundToStep(chosen.sphere, cfg.powerStep),
+      arSE,
+      predictedSE: chosen.se,
+      shift: chosen.shift,
+      applied: true,
+      requestedShift: proposedShift,
+      status: seDeviationStatus(chosen.shift)
+    };
+  }
+
   function predictEye({ sph, cyl, axis, va, pinhole }) {
     const arSph = Number(sph);
     const arCyl = Number(cyl);
@@ -74,56 +138,37 @@
       throw new Error("Incomplete autorefractor data.");
     }
 
-    let predCyl = arCyl;
-    if (cfg.heuristics.cylinderRelaxation > 0 && arCyl < 0) {
-      predCyl = Math.min(0, arCyl + cfg.heuristics.cylinderRelaxation);
-    }
-    predCyl = roundToStep(predCyl, cfg.powerStep);
-
-    const vaBase = vaDecimal(va);
-    const vaPh = vaDecimal(pinhole);
-    const improvement =
-      (vaBase != null && vaPh != null) ? (vaPh - vaBase) : null;
-
-    let predSph = arSph;
-    const allowSphereRelaxation =
-      (improvement != null && improvement >= cfg.heuristics.pinholeImprovementThreshold) ||
-      (vaBase != null && vaBase >= cfg.heuristics.goodBaselineVaThreshold);
-
-    if (allowSphereRelaxation && cfg.heuristics.sphereRelaxation > 0) {
-      predSph = arSph + cfg.heuristics.sphereRelaxation;
-    }
-    predSph = roundToStep(predSph, cfg.powerStep);
-
-    const predAxis = cfg.heuristics.preserveAxis
-      ? quantizeAxis(arAxis)
-      : quantizeAxis(arAxis);
+    const predCyl = roundToStep(arCyl, cfg.powerStep);
+    const proposedSph = roundToStep(arSph + cfg.heuristics.sphereOffset, cfg.powerStep);
+    const guard = enforceSEBudget(arSph, arCyl, proposedSph, predCyl);
+    const predSph = guard.sphere;
+    const predAxis = quantizeAxis(arAxis);
 
     return {
       sphere: predSph,
       cylinder: predCyl,
       axis: predAxis,
+      sphericalEquivalent: sphericalEquivalent(predSph, predCyl),
+      seShiftFromAR: sphericalEquivalent(predSph, predCyl) - sphericalEquivalent(arSph, arCyl),
+      seGuardrail: {
+        status: guard.status,
+        applied: guard.applied,
+        maxAutomaticShift: cfg.seGuardrail.maxAutomaticShift,
+        requestedShift: guard.requestedShift
+      },
       raw: {
         sphere: arSph,
         cylinder: arCyl,
         axis: arAxis,
-        va: vaBase,
-        pinhole: vaPh,
-        pinholeImprovement: improvement
+        sphericalEquivalent: sphericalEquivalent(arSph, arCyl)
       },
       vectors: powerVector(predSph, predCyl, predAxis)
     };
   }
 
   function predictCase(input) {
-    const od = predictEye({
-      sph: input.od.sphere, cyl: input.od.cylinder, axis: input.od.axis,
-      va: input.od.va, pinhole: input.od.pinhole
-    });
-    const os = predictEye({
-      sph: input.os.sphere, cyl: input.os.cylinder, axis: input.os.axis,
-      va: input.os.va, pinhole: input.os.pinhole
-    });
+    const od = predictEye(input.od);
+    const os = predictEye(input.os);
 
     const addOD = tentativeAdd(input.age, od.sphere, od.cylinder);
     const addOS = tentativeAdd(input.age, os.sphere, os.cylinder);
@@ -141,14 +186,18 @@
   function compareEye(pred, actual) {
     const pVec = powerVector(pred.sphere, pred.cylinder, pred.axis);
     const aVec = powerVector(actual.sphere, actual.cylinder, actual.axis);
+    const predictedSE = sphericalEquivalent(pred.sphere, pred.cylinder);
+    const actualSE = sphericalEquivalent(actual.sphere, actual.cylinder);
+    const seError = actualSE - predictedSE;
 
     return {
       sphereError: roundToStep(actual.sphere - pred.sphere, cfg.powerStep),
       cylinderError: roundToStep(actual.cylinder - pred.cylinder, cfg.powerStep),
       axisError: axisDistance(pred.axis, actual.axis),
-      sphericalEquivalentError:
-        sphericalEquivalent(actual.sphere, actual.cylinder) -
-        sphericalEquivalent(pred.sphere, pred.cylinder),
+      predictedSE,
+      actualSE,
+      sphericalEquivalentError: seError,
+      within025SE: Math.abs(seError) <= 0.25 + EPS,
       vectorError: {
         M: aVec.M - pVec.M,
         J0: aVec.J0 - pVec.J0,
@@ -158,8 +207,8 @@
         actual.sphere === pred.sphere &&
         actual.cylinder === pred.cylinder &&
         axisDistance(actual.axis, pred.axis) === 0,
-      within025Sphere: Math.abs(actual.sphere - pred.sphere) <= 0.25,
-      within025Cylinder: Math.abs(actual.cylinder - pred.cylinder) <= 0.25,
+      within025Sphere: Math.abs(actual.sphere - pred.sphere) <= 0.25 + EPS,
+      within025Cylinder: Math.abs(actual.cylinder - pred.cylinder) <= 0.25 + EPS,
       within5Axis: axisDistance(actual.axis, pred.axis) <= 5
     };
   }
@@ -173,6 +222,7 @@
     powerVector,
     classifyRefractiveState,
     tentativeAdd,
+    seDeviationStatus,
     predictCase,
     compareEye
   };

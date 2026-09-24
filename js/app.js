@@ -8,6 +8,19 @@
   let lockedInput = null;
   let currentComparison = null;
 
+  const symptomMap = {
+    tearing: ["symptomTearing", "Tearing"],
+    blurredVision: ["symptomBlur", "Blurred vision"],
+    burningIrritation: ["symptomBurning", "Burning / irritation"],
+    itching: ["symptomItching", "Itching"],
+    discharge: ["symptomDischarge", "Discharge"],
+    infection: ["symptomInfection", "Infection"],
+    headache: ["symptomHeadache", "Headache"],
+    flashes: ["symptomFlashes", "Flashes"],
+    dryEye: ["symptomDryEye", "Dry eye"],
+    other: ["symptomOther", "Other"]
+  };
+
   function newCaseId() {
     const cases = store.listCases();
     return "RX-" + String(cases.length + 1).padStart(4, "0");
@@ -41,22 +54,58 @@
     return v === "" ? null : Number(v);
   }
 
+  function signedPower(id) {
+    const el = $(id);
+    if (el.value === "") return null;
+    const magnitude = Math.abs(Number(el.value));
+    const sign = Number(el.dataset.sign || -1);
+    return magnitude === 0 ? 0 : magnitude * sign;
+  }
+
+  function negativeCylinder(id) {
+    const el = $(id);
+    if (el.value === "") return null;
+    const magnitude = Math.abs(Number(el.value));
+    return magnitude === 0 ? 0 : -magnitude;
+  }
+
+  function readSymptoms() {
+    const symptoms = {};
+    const labels = [];
+    for (const [key, [id, label]] of Object.entries(symptomMap)) {
+      const checked = $(id).checked;
+      symptoms[key] = checked;
+      if (checked) labels.push(label);
+    }
+    const otherText = $("symptomOtherText").value.trim();
+    symptoms.otherText = otherText;
+    if (symptoms.other && otherText) labels[labels.indexOf("Other")] = `Other: ${otherText}`;
+    return { symptoms, labels };
+  }
+
   function readInput() {
+    const symptomData = readSymptoms();
     return {
       caseId: $("caseId").value,
       age: number("age"),
-      symptom: $("symptom").value.trim(),
+      symptom: symptomData.labels.join(", "),
+      symptoms: symptomData.symptoms,
+      medical: {
+        diabetes: $("diabetes").checked,
+        hypertension: $("hypertension").checked,
+        pregnancy: $("pregnancy").checked
+      },
       previousRxKnown: $("previousRxKnown").value,
       od: {
-        sphere: number("arOdSph"),
-        cylinder: number("arOdCyl"),
+        sphere: signedPower("arOdSph"),
+        cylinder: negativeCylinder("arOdCyl"),
         axis: number("arOdAxis"),
         va: $("vaOd").value,
         pinhole: $("phOd").value
       },
       os: {
-        sphere: number("arOsSph"),
-        cylinder: number("arOsCyl"),
+        sphere: signedPower("arOsSph"),
+        cylinder: negativeCylinder("arOsCyl"),
         axis: number("arOsAxis"),
         va: $("vaOs").value,
         pinhole: $("phOs").value
@@ -67,13 +116,13 @@
   function readActual() {
     return {
       od: {
-        sphere: number("finalOdSph"),
-        cylinder: number("finalOdCyl"),
+        sphere: signedPower("finalOdSph"),
+        cylinder: negativeCylinder("finalOdCyl"),
         axis: number("finalOdAxis")
       },
       os: {
-        sphere: number("finalOsSph"),
-        cylinder: number("finalOsCyl"),
+        sphere: signedPower("finalOsSph"),
+        cylinder: negativeCylinder("finalOsCyl"),
         axis: number("finalOsAxis")
       },
       add: $("finalAdd").value === "" ? null : Number($("finalAdd").value),
@@ -81,8 +130,10 @@
     };
   }
 
-  function validRxEye(eye) {
-    return [eye.sphere, eye.cylinder, eye.axis].every(Number.isFinite);
+  function validRxEye(eye, rawAxis = false) {
+    if (![eye.sphere, eye.cylinder, eye.axis].every(Number.isFinite)) return false;
+    if (rawAxis && (eye.axis < 1 || eye.axis > 180)) return false;
+    return true;
   }
 
   function formatPower(n) {
@@ -94,19 +145,31 @@
     return n == null ? "—" : `${n}°`;
   }
 
+  function resetSigns() {
+    document.querySelectorAll(".sign-toggle").forEach(btn => {
+      const input = $(btn.dataset.signTarget);
+      input.dataset.sign = "-1";
+      btn.textContent = "−";
+      btn.dataset.positive = "false";
+    });
+  }
+
   function resetForm() {
     lockedPrediction = null;
     lockedInput = null;
     currentComparison = null;
     document.querySelectorAll("input").forEach(el => {
-      if (!el.readOnly) el.value = "";
+      if (el.type === "checkbox") el.checked = false;
+      else if (!el.readOnly) el.value = "";
     });
     document.querySelectorAll("select").forEach(el => el.selectedIndex = 0);
+    resetSigns();
     $("caseId").value = newCaseId();
     $("lockStatus").textContent = "";
     $("finalSection").classList.add("hidden");
     $("comparisonSection").classList.add("hidden");
     $("comparisonContent").innerHTML = "";
+    $("lockBtn").disabled = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -116,8 +179,8 @@
       $("lockStatus").textContent = "Enter age first.";
       return;
     }
-    if (!validRxEye(input.od) || !validRxEye(input.os)) {
-      $("lockStatus").textContent = "Enter complete OD and OS autorefractor data.";
+    if (!validRxEye(input.od, true) || !validRxEye(input.os, true)) {
+      $("lockStatus").textContent = "Enter complete OD/OS data. Raw AR axis must be between 1° and 180°.";
       return;
     }
     try {
@@ -189,7 +252,6 @@
     updateStats();
     alert("Case saved locally.");
     resetForm();
-    $("lockBtn").disabled = false;
   }
 
   function updateStats() {
@@ -231,16 +293,22 @@
     store.clearCases();
     updateStats();
     resetForm();
-    $("lockBtn").disabled = false;
   }
+
+  document.querySelectorAll(".sign-toggle").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const input = $(btn.dataset.signTarget);
+      const positive = Number(input.dataset.sign || -1) < 0;
+      input.dataset.sign = positive ? "1" : "-1";
+      btn.textContent = positive ? "+" : "−";
+      btn.dataset.positive = positive ? "true" : "false";
+    });
+  });
 
   $("lockBtn").addEventListener("click", lockPrediction);
   $("revealBtn").addEventListener("click", reveal);
   $("saveCaseBtn").addEventListener("click", saveCase);
-  $("newCaseBtn").addEventListener("click", () => {
-    resetForm();
-    $("lockBtn").disabled = false;
-  });
+  $("newCaseBtn").addEventListener("click", resetForm);
   $("exportBtn").addEventListener("click", exportCSV);
   $("clearDataBtn").addEventListener("click", clearData);
 
@@ -248,6 +316,7 @@
   populateAxis();
   populateAdd();
   $("caseId").value = newCaseId();
+  resetSigns();
   updateStats();
 
   if ("serviceWorker" in navigator) {

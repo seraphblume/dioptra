@@ -1,4 +1,4 @@
-const CACHE = "dioptra-v0.1.0";
+const CACHE = "dioptra-v0.1.1";
 const ASSETS = [
   "./",
   "./index.html",

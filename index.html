@@ -53,8 +53,20 @@
           <fieldset>
             <legend>Right eye (OD)</legend>
             <div class="rx-grid">
-              <label><span>SPH</span><input id="arOdSph" type="number" inputmode="decimal" step="0.25" placeholder="-2.50" /></label>
-              <label><span>CYL</span><input id="arOdCyl" type="number" inputmode="decimal" step="0.25" placeholder="-1.25" /></label>
+              <label>
+                <span>SPH</span>
+                <div class="signed-input">
+                  <button type="button" class="sign-toggle" data-sign-target="arOdSph" aria-label="Toggle sphere sign">−</button>
+                  <input id="arOdSph" class="power-magnitude" type="number" inputmode="decimal" min="0" step="0.25" placeholder="2.50" data-sign="-1" />
+                </div>
+              </label>
+              <label>
+                <span>CYL</span>
+                <div class="signed-input">
+                  <span class="sign-prefix">−</span>
+                  <input id="arOdCyl" class="power-magnitude" type="number" inputmode="decimal" min="0" step="0.25" placeholder="1.25" />
+                </div>
+              </label>
               <label><span>Axis</span><input id="arOdAxis" type="number" inputmode="numeric" min="1" max="180" step="1" placeholder="178" /></label>
             </div>
             <div class="va-grid">
@@ -66,8 +78,20 @@
           <fieldset>
             <legend>Left eye (OS)</legend>
             <div class="rx-grid">
-              <label><span>SPH</span><input id="arOsSph" type="number" inputmode="decimal" step="0.25" placeholder="-2.75" /></label>
-              <label><span>CYL</span><input id="arOsCyl" type="number" inputmode="decimal" step="0.25" placeholder="-1.00" /></label>
+              <label>
+                <span>SPH</span>
+                <div class="signed-input">
+                  <button type="button" class="sign-toggle" data-sign-target="arOsSph" aria-label="Toggle sphere sign">−</button>
+                  <input id="arOsSph" class="power-magnitude" type="number" inputmode="decimal" min="0" step="0.25" placeholder="2.75" data-sign="-1" />
+                </div>
+              </label>
+              <label>
+                <span>CYL</span>
+                <div class="signed-input">
+                  <span class="sign-prefix">−</span>
+                  <input id="arOsCyl" class="power-magnitude" type="number" inputmode="decimal" min="0" step="0.25" placeholder="1.00" />
+                </div>
+              </label>
               <label><span>Axis</span><input id="arOsAxis" type="number" inputmode="numeric" min="1" max="180" step="1" placeholder="168" /></label>
             </div>
             <div class="va-grid">
@@ -77,10 +101,36 @@
           </fieldset>
         </div>
 
-        <details class="details-block">
-          <summary>Optional symptoms / notes</summary>
-          <div class="grid two">
-            <label><span>Primary symptom</span><input id="symptom" type="text" placeholder="Distance blur, headache, etc." /></label>
+        <details class="details-block" open>
+          <summary>Symptoms & medical background</summary>
+
+          <div class="subsection">
+            <span class="subsection-label">Visual symptoms</span>
+            <div class="chip-grid">
+              <label class="check-chip"><input type="checkbox" id="symptomTearing" /><span>Tearing</span></label>
+              <label class="check-chip"><input type="checkbox" id="symptomBlur" /><span>Blurred vision</span></label>
+              <label class="check-chip"><input type="checkbox" id="symptomBurning" /><span>Burning / irritation</span></label>
+              <label class="check-chip"><input type="checkbox" id="symptomItching" /><span>Itching</span></label>
+              <label class="check-chip"><input type="checkbox" id="symptomDischarge" /><span>Discharge</span></label>
+              <label class="check-chip"><input type="checkbox" id="symptomInfection" /><span>Infection</span></label>
+              <label class="check-chip"><input type="checkbox" id="symptomHeadache" /><span>Headache</span></label>
+              <label class="check-chip"><input type="checkbox" id="symptomFlashes" /><span>Flashes</span></label>
+              <label class="check-chip"><input type="checkbox" id="symptomDryEye" /><span>Dry eye</span></label>
+              <label class="check-chip"><input type="checkbox" id="symptomOther" /><span>Other</span></label>
+            </div>
+            <label class="other-field"><span>Other symptom</span><input id="symptomOtherText" type="text" placeholder="Optional" /></label>
+          </div>
+
+          <div class="subsection">
+            <span class="subsection-label">Medical background</span>
+            <div class="chip-grid medical-chips">
+              <label class="check-chip"><input type="checkbox" id="diabetes" /><span>Diabetes</span></label>
+              <label class="check-chip"><input type="checkbox" id="hypertension" /><span>Hypertension</span></label>
+              <label class="check-chip"><input type="checkbox" id="pregnancy" /><span>Pregnancy</span></label>
+            </div>
+          </div>
+
+          <div class="grid two compact-grid">
             <label><span>Previous Rx known?</span>
               <select id="previousRxKnown">
                 <option value="">Not recorded</option>
@@ -107,8 +157,20 @@
           <fieldset>
             <legend>Right eye (OD)</legend>
             <div class="rx-grid">
-              <label><span>SPH</span><input id="finalOdSph" type="number" inputmode="decimal" step="0.25" /></label>
-              <label><span>CYL</span><input id="finalOdCyl" type="number" inputmode="decimal" step="0.25" /></label>
+              <label>
+                <span>SPH</span>
+                <div class="signed-input">
+                  <button type="button" class="sign-toggle" data-sign-target="finalOdSph" aria-label="Toggle sphere sign">−</button>
+                  <input id="finalOdSph" class="power-magnitude" type="number" inputmode="decimal" min="0" step="0.25" data-sign="-1" />
+                </div>
+              </label>
+              <label>
+                <span>CYL</span>
+                <div class="signed-input">
+                  <span class="sign-prefix">−</span>
+                  <input id="finalOdCyl" class="power-magnitude" type="number" inputmode="decimal" min="0" step="0.25" />
+                </div>
+              </label>
               <label><span>Axis</span><select id="finalOdAxis"></select></label>
             </div>
           </fieldset>
@@ -116,8 +178,20 @@
           <fieldset>
             <legend>Left eye (OS)</legend>
             <div class="rx-grid">
-              <label><span>SPH</span><input id="finalOsSph" type="number" inputmode="decimal" step="0.25" /></label>
-              <label><span>CYL</span><input id="finalOsCyl" type="number" inputmode="decimal" step="0.25" /></label>
+              <label>
+                <span>SPH</span>
+                <div class="signed-input">
+                  <button type="button" class="sign-toggle" data-sign-target="finalOsSph" aria-label="Toggle sphere sign">−</button>
+                  <input id="finalOsSph" class="power-magnitude" type="number" inputmode="decimal" min="0" step="0.25" data-sign="-1" />
+                </div>
+              </label>
+              <label>
+                <span>CYL</span>
+                <div class="signed-input">
+                  <span class="sign-prefix">−</span>
+                  <input id="finalOsCyl" class="power-magnitude" type="number" inputmode="decimal" min="0" step="0.25" />
+                </div>
+              </label>
               <label><span>Axis</span><select id="finalOsAxis"></select></label>
             </div>
           </fieldset>
@@ -168,8 +242,7 @@
               quantizes final axis to 5° steps, and uses configurable heuristics rather than machine learning.
             </p>
             <p>
-              The purpose is to collect blinded comparison data. Do not tune the algorithm against individual cases
-              during a shift. Review changes only after a predefined batch of cases.
+              Symptoms and medical-history fields are recorded as study variables but do not alter the v0 prediction.
             </p>
           </div>
         </details>

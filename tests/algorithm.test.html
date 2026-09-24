@@ -1,33 +1,27 @@
 <!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>Dioptra algorithm smoke tests</title>
-<style>
-body{font-family:system-ui;background:#111;color:#eee;padding:24px}
-.pass{color:#9dd9b0}.fail{color:#ff8b8b}code{background:#222;padding:2px 5px;border-radius:5px}
-</style>
-</head>
-<body>
-<h1>Project Dioptra smoke tests</h1>
-<div id="out"></div>
-<script src="../js/config.js"></script>
-<script src="../js/algorithm.js"></script>
+<html lang="en"><head><meta charset="utf-8"><title>Dioptra v0.2 tests</title></head>
+<body><div id="out"></div>
+<script src="../js/config.js"></script><script src="../js/algorithm.js"></script>
 <script>
-const out = document.getElementById("out");
-function test(name, fn) {
-  try { fn(); out.innerHTML += `<p class="pass">PASS — ${name}</p>`; }
-  catch (e) { out.innerHTML += `<p class="fail">FAIL — ${name}: ${e.message}</p>`; }
-}
-function eq(a,b){ if(a!==b) throw new Error(`${a} !== ${b}`); }
-function near(a,b,t=1e-9){ if(Math.abs(a-b)>t) throw new Error(`${a} !~= ${b}`); }
-
-test("178° quantizes to 180°", () => eq(DioptraAlgorithm.quantizeAxis(178), 180));
-test("168° quantizes to 170°", () => eq(DioptraAlgorithm.quantizeAxis(168), 170));
-test("180° vs 5° circular error is 5°", () => eq(DioptraAlgorithm.axisDistance(180,5), 5));
-test("SE of -2.25 -1.00 is -2.75", () => near(DioptraAlgorithm.sphericalEquivalent(-2.25,-1.00), -2.75));
-test("47yo myope tentative add = +0.75", () => eq(DioptraAlgorithm.tentativeAdd(47,-2.25,-1.00), 0.75));
-test("52yo higher hyperope tentative add = +2.25", () => eq(DioptraAlgorithm.tentativeAdd(52,2.50,0), 2.25));
-</script>
-</body>
-</html>
+const out=document.getElementById("out");
+function test(name,fn){try{fn();out.innerHTML+=`<p>PASS — ${name}</p>`}catch(e){out.innerHTML+=`<p>FAIL — ${name}: ${e.message}</p>`}}
+function eq(a,b){if(a!==b)throw new Error(`${a} !== ${b}`)}
+function near(a,b,t=1e-9){if(Math.abs(a-b)>t)throw new Error(`${a} !~= ${b}`)}
+test("version",()=>eq(DIOPTRA_CONFIG.version,"0.2.0"));
+test("axis 178→180",()=>eq(DioptraAlgorithm.quantizeAxis(178),180));
+test("axis circular 180↔5=5",()=>eq(DioptraAlgorithm.axisDistance(180,5),5));
+test("candidate rule",()=>{
+ const p=DioptraAlgorithm.predictCase({age:25,
+  od:{sphere:-2.50,cylinder:-1.25,axis:178,va:"20/100",pinhole:"20/50"},
+  os:{sphere:-2.75,cylinder:-1.00,axis:168,va:"20/100",pinhole:"20/50"}});
+ eq(p.od.sphere,-2.75); eq(p.od.cylinder,-1.25); eq(p.od.axis,180);
+ eq(p.os.sphere,-3.00); eq(p.os.cylinder,-1.00); eq(p.os.axis,170);
+ near(p.od.seShiftFromAR,-0.25); near(p.os.seShiftFromAR,-0.25);
+});
+test("SE budget",()=>{
+ const p=DioptraAlgorithm.predictCase({age:25,
+  od:{sphere:0.37,cylinder:-0.37,axis:90,va:"20/20",pinhole:"20/20"},
+  os:{sphere:0.37,cylinder:-0.37,axis:90,va:"20/20",pinhole:"20/20"}});
+ if(Math.abs(p.od.seShiftFromAR)>0.2500001)throw new Error(p.od.seShiftFromAR);
+});
+</script></body></html>

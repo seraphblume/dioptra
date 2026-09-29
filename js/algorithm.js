@@ -167,8 +167,21 @@
   }
 
   function predictCase(input) {
-    const od = predictEye(input.od);
-    const os = predictEye(input.os);
+    // UI/storage use sphere/cylinder/axis field names; predictEye expects sph/cyl/axis.
+    const od = predictEye({
+      sph: input.od.sphere,
+      cyl: input.od.cylinder,
+      axis: input.od.axis,
+      va: input.od.va,
+      pinhole: input.od.pinhole
+    });
+    const os = predictEye({
+      sph: input.os.sphere,
+      cyl: input.os.cylinder,
+      axis: input.os.axis,
+      va: input.os.va,
+      pinhole: input.os.pinhole
+    });
 
     const addOD = tentativeAdd(input.age, od.sphere, od.cylinder);
     const addOS = tentativeAdd(input.age, os.sphere, os.cylinder);

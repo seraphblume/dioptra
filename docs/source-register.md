@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This register records which supplied Devlyn training notes informed the Dioptra documentation, what was taken from each, and what was deliberately kept outside the spectacle-Rx predictor. It is a provenance record, not an endorsement or independent validation of every statement in the training material.
+This register records which supplied optometry training notes informed the Dioptra documentation, what was taken from each, and what was deliberately kept outside the spectacle-Rx predictor. It is a provenance record, not an endorsement or independent validation of every statement in the training material.
 
 The source notes are not copied into this repository. Titles and source metadata below identify the user-supplied material reviewed on 2026-10-01. The referenced conversation exposed ten attachment bodies for direct review; no claim was imported from an attachment body that was not available in this execution.
 
@@ -10,9 +10,9 @@ The source notes are not copied into this repository. Titles and source metadata
 
 | Source note | Source metadata recorded in the note | Dioptra use |
 |---|---|---|
-| `Eye_Exam_Protocol.md` | Arturo Torres Hernández, *Guía Práctica Para Realizar Un Examen De La Vista*, Devlyn instructor guide, 14th ed. (2015); Devlyn laminated sheets and forms | Defines exam stages; history and habitual-correction context; corrected/uncorrected distance and near VA; pinhole as a plausibility/triage observation; preliminary health/binocular tests as flags; ambulatory verification; separation of clinical findings from product selection. |
-| `Objective_Refraction.md` | Same Devlyn guide, sections XIII–XVI and retinoscopy appendix | Supports storing lensometry/habitual Rx, autorefractor, keratometry and retinoscopy as distinct objective observations. The autorefractor and retinoscopy are starting points, not final prescriptions. |
-| `Subjective_Refraction.md` | Same Devlyn guide, sections XVII–XXIII; Devlyn cards; dominant-eye appendix | Supports a distinct subjective endpoint; cylinder/sphere refinement provenance; the most-plus/least-minus principle; binocular-balance fields; refined ADD inputs; and explicit recording when the dispensed Rx differs from the subjective endpoint for adaptation or another clinical reason. |
+| `Eye_Exam_Protocol.md` | Arturo Torres Hernández, *Guía Práctica Para Realizar Un Examen De La Vista*, instructor guide, 14th ed. (2015); laminated sheets and forms | Defines exam stages; history and habitual-correction context; corrected/uncorrected distance and near VA; pinhole as a plausibility/triage observation; preliminary health/binocular tests as flags; ambulatory verification; separation of clinical findings from product selection. |
+| `Objective_Refraction.md` | Same training guide, sections XIII–XVI and retinoscopy appendix | Supports storing lensometry/habitual Rx, autorefractor, keratometry and retinoscopy as distinct objective observations. The autorefractor and retinoscopy are starting points, not final prescriptions. |
+| `Subjective_Refraction.md` | Same training guide, sections XVII–XXIII; training cards; dominant-eye appendix | Supports a distinct subjective endpoint; cylinder/sphere refinement provenance; the most-plus/least-minus principle; binocular-balance fields; refined ADD inputs; and explicit recording when the dispensed Rx differs from the subjective endpoint for adaptation or another clinical reason. |
 
 ## Downstream and boundary sources
 
@@ -38,7 +38,7 @@ These sources help define what occurs **after** a spectacle refractive endpoint.
 
 ## Design hypotheses, not source claims
 
-The following concepts are proposals derived from the documented workflow and optical representation. They are not claims made by the Devlyn sources:
+The following concepts are proposals derived from the documented workflow and optical representation. They are not claims made by the source material:
 
 - combining objective measurements in power-vector space (`M`, `J0`, `J45`);
 - estimating a robust center and dispersion from repeated autorefractor readings;

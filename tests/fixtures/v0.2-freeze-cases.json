@@ -1,0 +1,37 @@
+[
+  {
+    "name": "receipt-like myopic astigmatism",
+    "input": {
+      "age": 25,
+      "od": { "sphere": -2.5, "cylinder": -1.25, "axis": 178, "va": "20/100", "pinhole": "20/50" },
+      "os": { "sphere": -2.75, "cylinder": -1, "axis": 168, "va": "20/100", "pinhole": "20/50" }
+    },
+    "expected": {
+      "od": { "sphere": -2.75, "cylinder": -1.25, "axis": 180, "seShiftFromAR": -0.25 },
+      "os": { "sphere": -3, "cylinder": -1, "axis": 170, "seShiftFromAR": -0.25 },
+      "tentativeAdd": 0
+    }
+  },
+  {
+    "name": "hyperopic presbyope ADD lookup",
+    "input": {
+      "age": 52,
+      "od": { "sphere": 3, "cylinder": -0.5, "axis": 2, "va": "20/30", "pinhole": "20/20" },
+      "os": { "sphere": 2.75, "cylinder": -0.75, "axis": 179, "va": "20/30", "pinhole": "20/20" }
+    },
+    "expected": {
+      "od": { "sphere": 2.75, "cylinder": -0.5, "axis": 180, "seShiftFromAR": -0.25 },
+      "os": { "sphere": 2.5, "cylinder": -0.75, "axis": 180, "seShiftFromAR": -0.25 },
+      "tentativeAdd": 2.25
+    }
+  },
+  {
+    "name": "quantization still obeys SE budget",
+    "input": {
+      "age": 40,
+      "od": { "sphere": 0.37, "cylinder": -0.37, "axis": 91, "va": "20/20", "pinhole": "20/20" },
+      "os": { "sphere": -0.12, "cylinder": -0.62, "axis": 44, "va": "20/20", "pinhole": "20/20" }
+    },
+    "maximumAbsoluteSeShift": 0.25
+  }
+]

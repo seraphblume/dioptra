@@ -36,7 +36,7 @@ The chairside UI also records multi-select symptoms plus diabetes, hypertension 
 
 ## Clinical evidence and future design
 
-The Devlyn training review added documentation and research scaffolding only. It does **not** change the v0.2.0 predictor, the chairside workflow, local storage, or Cohort B CSV columns.
+The review of the supplied optometry training material added documentation and research scaffolding only. It does **not** change the v0.2.0 predictor, the chairside workflow, local storage, or Cohort B CSV columns.
 
 - [Clinical rationale and scope](docs/clinical-rationale.md)
 - [Source register and traceability](docs/source-register.md)

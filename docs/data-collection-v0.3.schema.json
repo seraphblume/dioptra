@@ -1,0 +1,311 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seraphblume.github.io/dioptra/docs/data-collection-v0.3.schema.json",
+  "title": "Project Dioptra proposed v0.3 research case",
+  "description": "Future research schema only. It must not be used to change the v0.2.0 Cohort B predictor.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "caseId",
+    "cohort",
+    "algorithmVersion",
+    "shadowOnly",
+    "patientContext",
+    "objectiveRefraction",
+    "subjectiveRefraction",
+    "prescribedRx"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "0.3-draft-1" },
+    "caseId": { "type": "string", "minLength": 1, "description": "Pseudonymous research identifier; do not use name, phone or email." },
+    "cohort": { "type": "string", "minLength": 1 },
+    "algorithmVersion": { "type": "string", "minLength": 1 },
+    "shadowOnly": { "type": "boolean", "description": "True when collected alongside a frozen predictor but unavailable to that predictor." },
+    "collectedAt": { "type": ["string", "null"], "format": "date-time" },
+    "siteCode": { "type": ["string", "null"] },
+    "patientContext": { "$ref": "#/$defs/patientContext" },
+    "habitualCorrection": { "$ref": "#/$defs/habitualCorrection" },
+    "visualAcuity": { "$ref": "#/$defs/visualAcuitySet" },
+    "preliminaryScreen": { "$ref": "#/$defs/preliminaryScreen" },
+    "objectiveRefraction": { "$ref": "#/$defs/objectiveRefraction" },
+    "subjectiveRefraction": { "$ref": "#/$defs/subjectiveRefraction" },
+    "nearRefraction": { "$ref": "#/$defs/nearRefraction" },
+    "prescribedRx": { "$ref": "#/$defs/prescribedRx" },
+    "derivedAudit": { "$ref": "#/$defs/derivedAudit" },
+    "notes": { "type": ["string", "null"] }
+  },
+  "$defs": {
+    "eye": { "type": "string", "enum": ["OD", "OS"] },
+    "sphere": { "type": "number", "multipleOf": 0.25 },
+    "cylinder": { "type": "number", "maximum": 0, "multipleOf": 0.25 },
+    "axis": { "type": "integer", "minimum": 1, "maximum": 180 },
+    "add": { "type": "number", "minimum": 0, "multipleOf": 0.25 },
+    "rxEye": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sphere", "cylinder", "axis"],
+      "properties": {
+        "sphere": { "$ref": "#/$defs/sphere" },
+        "cylinder": { "$ref": "#/$defs/cylinder" },
+        "axis": { "$ref": "#/$defs/axis" },
+        "add": { "$ref": "#/$defs/add" }
+      }
+    },
+    "binocularRx": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["od", "os"],
+      "properties": {
+        "od": { "$ref": "#/$defs/rxEye" },
+        "os": { "$ref": "#/$defs/rxEye" }
+      }
+    },
+    "procedureStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["performed", "not_indicated", "not_performed", "unavailable", "untestable", "declined", "unknown"]
+        },
+        "result": { "type": ["string", "number", "boolean", "null"] },
+        "note": { "type": ["string", "null"] }
+      }
+    },
+    "patientContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["age"],
+      "properties": {
+        "age": { "type": "integer", "minimum": 0, "maximum": 120 },
+        "chiefComplaintCode": { "type": ["string", "null"] },
+        "primaryVisualTask": { "type": ["string", "null"] },
+        "symptoms": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+        "diabetes": { "type": ["boolean", "null"] },
+        "hypertension": { "type": ["boolean", "null"] },
+        "pregnancy": { "type": ["boolean", "null"] },
+        "ocularHistoryNote": { "type": ["string", "null"] }
+      }
+    },
+    "habitualCorrection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "$ref": "#/$defs/procedureStatus" },
+        "rx": { "$ref": "#/$defs/binocularRx" },
+        "ageMonths": { "type": ["integer", "null"], "minimum": 0 },
+        "adapted": { "type": ["boolean", "null"] },
+        "satisfied": { "type": ["boolean", "null"] },
+        "complaint": { "type": ["string", "null"] }
+      }
+    },
+    "vaObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "$ref": "#/$defs/procedureStatus" },
+        "notationRaw": { "type": ["string", "null"], "description": "Preserve modifiers such as -2 or +1." },
+        "distanceCm": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "correctionCondition": { "type": ["string", "null"], "enum": ["uncorrected", "habitual", "subjective_endpoint", "pinhole", null] }
+      }
+    },
+    "visualAcuitySet": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "distanceUncorrectedOD": { "$ref": "#/$defs/vaObservation" },
+        "distanceUncorrectedOS": { "$ref": "#/$defs/vaObservation" },
+        "distanceHabitualOD": { "$ref": "#/$defs/vaObservation" },
+        "distanceHabitualOS": { "$ref": "#/$defs/vaObservation" },
+        "nearHabitualOD": { "$ref": "#/$defs/vaObservation" },
+        "nearHabitualOS": { "$ref": "#/$defs/vaObservation" },
+        "nearHabitualAO": { "$ref": "#/$defs/vaObservation" },
+        "pinholeOD": { "$ref": "#/$defs/vaObservation" },
+        "pinholeOS": { "$ref": "#/$defs/vaObservation" }
+      }
+    },
+    "preliminaryScreen": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "coverDistance": { "$ref": "#/$defs/procedureStatus" },
+        "coverNear": { "$ref": "#/$defs/procedureStatus" },
+        "nearPointConvergence": { "$ref": "#/$defs/procedureStatus" },
+        "colourVisionOD": { "$ref": "#/$defs/procedureStatus" },
+        "colourVisionOS": { "$ref": "#/$defs/procedureStatus" },
+        "externalExam": { "$ref": "#/$defs/procedureStatus" },
+        "motility": { "$ref": "#/$defs/procedureStatus" },
+        "pupils": { "$ref": "#/$defs/procedureStatus" },
+        "confrontationFieldsOD": { "$ref": "#/$defs/procedureStatus" },
+        "confrontationFieldsOS": { "$ref": "#/$defs/procedureStatus" },
+        "slitLamp": { "$ref": "#/$defs/procedureStatus" },
+        "fundus": { "$ref": "#/$defs/procedureStatus" }
+      }
+    },
+    "arReading": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sphere", "cylinder", "axis"],
+      "properties": {
+        "sphere": { "$ref": "#/$defs/sphere" },
+        "cylinder": { "$ref": "#/$defs/cylinder" },
+        "axis": { "$ref": "#/$defs/axis" },
+        "qualityTokenRaw": { "type": ["string", "number", "null"], "description": "Opaque until the instrument manual defines it." }
+      }
+    },
+    "arEye": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["readings", "selected"],
+      "properties": {
+        "readings": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/arReading" } },
+        "selected": { "$ref": "#/$defs/arReading" }
+      }
+    },
+    "keratometryEye": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "$ref": "#/$defs/procedureStatus" },
+        "k1D": { "type": ["number", "null"] },
+        "k1Axis": { "type": ["integer", "null"], "minimum": 1, "maximum": 180 },
+        "k2D": { "type": ["number", "null"] },
+        "k2Axis": { "type": ["integer", "null"], "minimum": 1, "maximum": 180 }
+      }
+    },
+    "objectiveRefraction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["autorefractor"],
+      "properties": {
+        "autorefractor": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["od", "os"],
+          "properties": {
+            "deviceMakeModel": { "type": ["string", "null"] },
+            "deviceSerialOrCode": { "type": ["string", "null"] },
+            "vertexDistanceMm": { "type": ["number", "null"] },
+            "instrumentWorkingDistanceCm": { "type": ["number", "null"] },
+            "distancePdMm": { "type": ["number", "null"] },
+            "nearPdMm": { "type": ["number", "null"] },
+            "od": { "$ref": "#/$defs/arEye" },
+            "os": { "$ref": "#/$defs/arEye" }
+          }
+        },
+        "retinoscopy": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": { "$ref": "#/$defs/procedureStatus" },
+            "workingDistanceCm": { "type": ["number", "null"] },
+            "workingDistanceCompensated": { "type": ["boolean", "null"] },
+            "rx": { "$ref": "#/$defs/binocularRx" }
+          }
+        },
+        "keratometry": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "deviceMakeModel": { "type": ["string", "null"] },
+            "od": { "$ref": "#/$defs/keratometryEye" },
+            "os": { "$ref": "#/$defs/keratometryEye" }
+          }
+        }
+      }
+    },
+    "subjectiveEye": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["endpoint", "bestDistanceVa"],
+      "properties": {
+        "endpoint": { "$ref": "#/$defs/rxEye" },
+        "bestDistanceVa": { "$ref": "#/$defs/vaObservation" },
+        "startingMethod": { "type": ["string", "null"], "enum": ["habitual", "autorefractor", "retinoscopy", "keratometry", "other", null] },
+        "cylinderRefinement": { "type": ["string", "null"], "enum": ["clock", "jackson_cross_cylinder", "both", "not_performed", "other", null] },
+        "sphereRefinement": { "type": "array", "uniqueItems": true, "items": { "type": "string", "enum": ["duochrome", "donders", "mpmav", "other"] } },
+        "duochromeUsable": { "type": ["boolean", "null"] }
+      }
+    },
+    "subjectiveRefraction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["od", "os", "binocularBalance"],
+      "properties": {
+        "od": { "$ref": "#/$defs/subjectiveEye" },
+        "os": { "$ref": "#/$defs/subjectiveEye" },
+        "binocularBalance": { "$ref": "#/$defs/procedureStatus" },
+        "dominantEye": { "type": ["string", "null"], "enum": ["OD", "OS", "none", "unknown", null] }
+      }
+    },
+    "nearRefraction": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": { "$ref": "#/$defs/procedureStatus" },
+        "workingDistanceCm": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "tentativeMethod": { "type": ["string", "null"], "enum": ["age_table", "habitual", "fused_cross_cylinder", "reading_card", "other", null] },
+        "tentativeAdd": { "$ref": "#/$defs/add" },
+        "nra": { "type": ["number", "null"], "multipleOf": 0.25 },
+        "pra": { "type": ["number", "null"], "multipleOf": 0.25 },
+        "distanceCheck": { "type": ["string", "null"], "enum": ["equal", "better_closer", "better_farther", "not_performed", null] },
+        "refinedAddOD": { "$ref": "#/$defs/add" },
+        "refinedAddOS": { "$ref": "#/$defs/add" },
+        "comfortableNearVa": { "$ref": "#/$defs/vaObservation" }
+      }
+    },
+    "prescribedRx": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rx", "differsFromSubjective", "ambulatoryTest"],
+      "properties": {
+        "rx": { "$ref": "#/$defs/binocularRx" },
+        "differsFromSubjective": { "type": "boolean" },
+        "modificationReasons": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["adaptation_large_change", "habitual_rx_preference", "binocular_comfort", "ambulatory_test", "visual_task", "pathology_or_health_finding", "clinician_judgment", "patient_preference", "other"]
+          }
+        },
+        "modificationNote": { "type": ["string", "null"] },
+        "ambulatoryTest": { "$ref": "#/$defs/procedureStatus" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "differsFromSubjective": { "const": true } }, "required": ["differsFromSubjective"] },
+          "then": { "required": ["modificationReasons"], "properties": { "modificationReasons": { "minItems": 1 } } }
+        }
+      ]
+    },
+    "derivedAudit": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ruleSetVersion": { "type": "string" },
+        "confidenceStatus": { "type": "string", "enum": ["not_computed", "insufficient_evidence", "review", "supported"] },
+        "flags": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+        "od": { "$ref": "#/$defs/vectorAudit" },
+        "os": { "$ref": "#/$defs/vectorAudit" }
+      }
+    },
+    "vectorAudit": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "M": { "type": "number" },
+        "J0": { "type": "number" },
+        "J45": { "type": "number" },
+        "arReadingSpreadM": { "type": ["number", "null"], "minimum": 0 },
+        "arReadingSpreadJ0": { "type": ["number", "null"], "minimum": 0 },
+        "arReadingSpreadJ45": { "type": ["number", "null"], "minimum": 0 }
+      }
+    }
+  }
+}

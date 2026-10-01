@@ -33,3 +33,16 @@ CSV export includes the SE fields and remains compatible with locally stored v0.
 ## Other study variables
 
 The chairside UI also records multi-select symptoms plus diabetes, hypertension and pregnancy as observational variables. Final axis is restricted to 5° multiples; raw AR axis is validated to 1–180°.
+
+## Clinical evidence and future design
+
+The Devlyn training review added documentation and research scaffolding only. It does **not** change the v0.2.0 predictor, the chairside workflow, local storage, or Cohort B CSV columns.
+
+- [Clinical rationale and scope](docs/clinical-rationale.md)
+- [Source register and traceability](docs/source-register.md)
+- [Proposed v0.3 data collection](docs/data-collection-v0.3.md)
+- [Machine-readable proposed schema](docs/data-collection-v0.3.schema.json)
+- [v0.3 design notes, safeguards, confidence and flags](docs/v0.3-design-notes.md)
+- [v0.2 freeze contract](docs/v0.2-freeze.md)
+
+Run `node tests/v0.2-freeze.test.js` to verify the frozen rule set against the checked-in regression fixtures.

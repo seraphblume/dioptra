@@ -1,6 +1,6 @@
 [
   {
-    "name": "receipt-like myopic astigmatism",
+    "name": "compound myopic astigmatism",
     "input": {
       "age": 25,
       "od": { "sphere": -2.5, "cylinder": -1.25, "axis": 178, "va": "20/100", "pinhole": "20/50" },

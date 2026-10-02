@@ -3,259 +3,197 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#111111" />
+  <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Dioptra" />
+  <meta name="color-scheme" content="light dark" />
   <title>Project Dioptra</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="assets/icon-192.png" />
   <link rel="stylesheet" href="css/app.css" />
 </head>
-<body>
-  <div class="app-shell">
-    <header class="topbar">
-      <div>
-        <p class="eyebrow">PROJECT DIOPTRA</p>
-        <h1>Blind Rx Predictor</h1>
+<body data-stage="measure">
+  <header class="navbar" id="navbar">
+    <div class="navbar-inner">
+      <button id="newCaseBtn" class="nav-button" type="button">New Case</button>
+      <span class="nav-title" id="navTitle">Dioptra</span>
+      <button id="exportBtn" class="nav-button" type="button">Export</button>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="large-title">
+      <h1 id="caseTitle">Case</h1>
+      <p id="engineLine" class="title-sub"></p>
+    </div>
+
+    <ol class="stepper" aria-label="Case progress">
+      <li data-step="measure"><span class="step-dot">1</span>Measure</li>
+      <li data-step="refract"><span class="step-dot">2</span>Refract</li>
+      <li data-step="compare"><span class="step-dot">3</span>Compare</li>
+    </ol>
+
+    <!-- 1 · Measure ------------------------------------------------------- -->
+    <fieldset id="measureSection" class="stage-section">
+      <h2 class="group-header">Patient</h2>
+      <div class="group">
+        <label class="row">
+          <span class="row-label">Age</span>
+          <input id="age" class="row-input num" type="text" inputmode="numeric" autocomplete="off" placeholder="Years" />
+        </label>
+        <div class="row">
+          <span class="row-label">Previous Rx</span>
+          <div class="segmented" id="previousRxKnown" data-value="" role="radiogroup" aria-label="Previous Rx known">
+            <button type="button" data-value="" role="radio">Unknown</button>
+            <button type="button" data-value="yes" role="radio">Yes</button>
+            <button type="button" data-value="no" role="radio">No</button>
+          </div>
+        </div>
       </div>
-      <button id="exportBtn" class="button secondary">Export CSV</button>
-    </header>
 
-    <main>
-      <section class="notice">
-        <strong>Research prototype only.</strong>
-        Do not use this tool as the sole basis for prescribing or dispensing. Final clinical decisions remain with the optometrist.
-      </section>
-
-      <section class="card">
-        <div class="section-heading">
-          <div>
-            <h2>1. Pre-refraction input</h2>
-            <p>Enter objective data before subjective refraction.</p>
+      <div class="eye-columns">
+        <section class="eye-section" data-eye="od">
+          <h2 class="group-header">Right eye · OD</h2>
+          <div class="group rx-table" id="ar-od"></div>
+          <div class="group">
+            <label class="row"><span class="row-label">Distance VA</span><select id="vaOd" class="row-select"></select></label>
+            <label class="row"><span class="row-label">Pinhole VA</span><select id="phOd" class="row-select"></select></label>
           </div>
-          <button id="newCaseBtn" class="button tertiary">New case</button>
-        </div>
-
-        <div class="grid two">
-          <label>
-            <span>Case ID</span>
-            <input id="caseId" type="text" readonly />
-          </label>
-          <label>
-            <span>Age</span>
-            <input id="age" type="number" inputmode="numeric" min="1" max="120" placeholder="e.g. 47" />
-          </label>
-        </div>
-
-        <div class="eye-grid">
-          <fieldset>
-            <legend>Right eye (OD)</legend>
-            <div class="rx-grid">
-              <label>
-                <span>SPH</span>
-                <div class="signed-input">
-                  <button type="button" class="sign-toggle" data-sign-target="arOdSph" aria-label="Toggle sphere sign">−</button>
-                  <input id="arOdSph" class="power-magnitude" type="number" inputmode="decimal" min="0" step="0.25" placeholder="2.50" data-sign="-1" />
-                </div>
-              </label>
-              <label>
-                <span>CYL</span>
-                <div class="signed-input">
-                  <span class="sign-prefix">−</span>
-                  <input id="arOdCyl" class="power-magnitude" type="number" inputmode="decimal" min="0" step="0.25" placeholder="1.25" />
-                </div>
-              </label>
-              <label><span>Axis</span><input id="arOdAxis" type="number" inputmode="numeric" min="1" max="180" step="1" placeholder="178" /></label>
-            </div>
-            <div class="va-grid">
-              <label><span>Distance VA</span><select id="vaOd"></select></label>
-              <label><span>Pinhole VA</span><select id="phOd"></select></label>
-            </div>
-          </fieldset>
-
-          <fieldset>
-            <legend>Left eye (OS)</legend>
-            <div class="rx-grid">
-              <label>
-                <span>SPH</span>
-                <div class="signed-input">
-                  <button type="button" class="sign-toggle" data-sign-target="arOsSph" aria-label="Toggle sphere sign">−</button>
-                  <input id="arOsSph" class="power-magnitude" type="number" inputmode="decimal" min="0" step="0.25" placeholder="2.75" data-sign="-1" />
-                </div>
-              </label>
-              <label>
-                <span>CYL</span>
-                <div class="signed-input">
-                  <span class="sign-prefix">−</span>
-                  <input id="arOsCyl" class="power-magnitude" type="number" inputmode="decimal" min="0" step="0.25" placeholder="1.00" />
-                </div>
-              </label>
-              <label><span>Axis</span><input id="arOsAxis" type="number" inputmode="numeric" min="1" max="180" step="1" placeholder="168" /></label>
-            </div>
-            <div class="va-grid">
-              <label><span>Distance VA</span><select id="vaOs"></select></label>
-              <label><span>Pinhole VA</span><select id="phOs"></select></label>
-            </div>
-          </fieldset>
-        </div>
-
-        <details class="details-block" open>
-          <summary>Symptoms & medical background</summary>
-
-          <div class="subsection">
-            <span class="subsection-label">Visual symptoms</span>
-            <div class="chip-grid">
-              <label class="check-chip"><input type="checkbox" id="symptomTearing" /><span>Tearing</span></label>
-              <label class="check-chip"><input type="checkbox" id="symptomBlur" /><span>Blurred vision</span></label>
-              <label class="check-chip"><input type="checkbox" id="symptomBurning" /><span>Burning / irritation</span></label>
-              <label class="check-chip"><input type="checkbox" id="symptomItching" /><span>Itching</span></label>
-              <label class="check-chip"><input type="checkbox" id="symptomDischarge" /><span>Discharge</span></label>
-              <label class="check-chip"><input type="checkbox" id="symptomInfection" /><span>Infection</span></label>
-              <label class="check-chip"><input type="checkbox" id="symptomHeadache" /><span>Headache</span></label>
-              <label class="check-chip"><input type="checkbox" id="symptomFlashes" /><span>Flashes</span></label>
-              <label class="check-chip"><input type="checkbox" id="symptomDryEye" /><span>Dry eye</span></label>
-              <label class="check-chip"><input type="checkbox" id="symptomOther" /><span>Other</span></label>
-            </div>
-            <label class="other-field"><span>Other symptom</span><input id="symptomOtherText" type="text" placeholder="Optional" /></label>
+        </section>
+        <section class="eye-section" data-eye="os">
+          <h2 class="group-header">Left eye · OS</h2>
+          <div class="group rx-table" id="ar-os"></div>
+          <div class="group">
+            <label class="row"><span class="row-label">Distance VA</span><select id="vaOs" class="row-select"></select></label>
+            <label class="row"><span class="row-label">Pinhole VA</span><select id="phOs" class="row-select"></select></label>
           </div>
+        </section>
+      </div>
+      <p class="group-footer">Copy the three readings and the bracketed line from the autorefractor ticket. Only the bracketed line is required; the readings let the v0.3 engine measure repeatability. Q is the reliability digit printed after each reading.</p>
 
-          <div class="subsection">
-            <span class="subsection-label">Medical background</span>
-            <div class="chip-grid medical-chips">
-              <label class="check-chip"><input type="checkbox" id="diabetes" /><span>Diabetes</span></label>
-              <label class="check-chip"><input type="checkbox" id="hypertension" /><span>Hypertension</span></label>
-              <label class="check-chip"><input type="checkbox" id="pregnancy" /><span>Pregnancy</span></label>
-            </div>
-          </div>
-
-          <div class="grid two compact-grid">
-            <label><span>Previous Rx known?</span>
-              <select id="previousRxKnown">
-                <option value="">Not recorded</option>
-                <option value="yes">Yes</option>
-                <option value="no">No</option>
-              </select>
-            </label>
-          </div>
-        </details>
-
-        <button id="lockBtn" class="button primary full">Lock prediction</button>
-        <p id="lockStatus" class="status"></p>
-      </section>
-
-      <section id="finalSection" class="card hidden">
-        <div class="section-heading">
-          <div>
-            <h2>2. Your organic final Rx</h2>
-            <p>Enter your final prescription before revealing the algorithm result.</p>
-          </div>
+      <h2 class="group-header">Instrument &amp; near</h2>
+      <div class="group">
+        <label class="row">
+          <span class="row-label">Vertex distance</span>
+          <span class="row-value"><input id="vertexMm" class="row-input num" type="text" inputmode="decimal" placeholder="12" /><span class="unit">mm</span></span>
+        </label>
+        <div class="row">
+          <span class="row-label">PD distance / near</span>
+          <span class="row-value">
+            <input id="pdDistance" class="row-input num short" type="text" inputmode="decimal" placeholder="—" aria-label="Distance PD" />
+            <span class="unit">/</span>
+            <input id="pdNear" class="row-input num short" type="text" inputmode="decimal" placeholder="—" aria-label="Near PD" />
+            <span class="unit">mm</span>
+          </span>
         </div>
+        <label class="row">
+          <span class="row-label">Near working distance</span>
+          <span class="row-value"><input id="nearWd" class="row-input num" type="text" inputmode="decimal" placeholder="—" /><span class="unit">cm</span></span>
+        </label>
+        <label class="row">
+          <span class="row-label">Near point</span>
+          <span class="row-value"><input id="nearPoint" class="row-input num" type="text" inputmode="decimal" placeholder="—" /><span class="unit">cm</span></span>
+        </label>
+      </div>
+      <p class="group-footer">Vertex distance is the VD printed on the ticket. Near fields are optional and only feed the v0.3 ADD estimate. Near point is the push-up blur point, measured through the distance correction.</p>
 
-        <div class="eye-grid">
-          <fieldset>
-            <legend>Right eye (OD)</legend>
-            <div class="rx-grid">
-              <label>
-                <span>SPH</span>
-                <div class="signed-input">
-                  <button type="button" class="sign-toggle" data-sign-target="finalOdSph" aria-label="Toggle sphere sign">−</button>
-                  <input id="finalOdSph" class="power-magnitude" type="number" inputmode="decimal" min="0" step="0.25" data-sign="-1" />
-                </div>
-              </label>
-              <label>
-                <span>CYL</span>
-                <div class="signed-input">
-                  <span class="sign-prefix">−</span>
-                  <input id="finalOdCyl" class="power-magnitude" type="number" inputmode="decimal" min="0" step="0.25" />
-                </div>
-              </label>
-              <label><span>Axis</span><select id="finalOdAxis"></select></label>
-            </div>
-          </fieldset>
+      <details class="group disclosure" id="kSection">
+        <summary class="row disclosure-row"><span class="row-label">Keratometry</span><span class="row-detail">Optional</span></summary>
+        <div id="k-fields"></div>
+      </details>
 
-          <fieldset>
-            <legend>Left eye (OS)</legend>
-            <div class="rx-grid">
-              <label>
-                <span>SPH</span>
-                <div class="signed-input">
-                  <button type="button" class="sign-toggle" data-sign-target="finalOsSph" aria-label="Toggle sphere sign">−</button>
-                  <input id="finalOsSph" class="power-magnitude" type="number" inputmode="decimal" min="0" step="0.25" data-sign="-1" />
-                </div>
-              </label>
-              <label>
-                <span>CYL</span>
-                <div class="signed-input">
-                  <span class="sign-prefix">−</span>
-                  <input id="finalOsCyl" class="power-magnitude" type="number" inputmode="decimal" min="0" step="0.25" />
-                </div>
-              </label>
-              <label><span>Axis</span><select id="finalOsAxis"></select></label>
-            </div>
-          </fieldset>
+      <h2 class="group-header">History</h2>
+      <div class="group">
+        <div class="row stacked">
+          <span class="row-caption">Symptoms</span>
+          <div class="chips" id="symptomChips"></div>
+          <input id="symptomOtherText" class="inline-input" type="text" placeholder="Other symptom (optional)" />
         </div>
-
-        <div class="grid two">
-          <label>
-            <span>Final ADD</span>
-            <select id="finalAdd"></select>
-          </label>
-          <label>
-            <span>Clinical note</span>
-            <input id="finalNote" type="text" placeholder="Optional" />
-          </label>
+        <div class="row stacked">
+          <span class="row-caption">Medical background</span>
+          <div class="chips" id="medicalChips"></div>
         </div>
+      </div>
+    </fieldset>
 
-        <button id="revealBtn" class="button primary full">Reveal & compare</button>
-      </section>
-
-      <section id="comparisonSection" class="card hidden">
-        <div class="section-heading">
-          <div>
-            <h2>3. Comparison</h2>
-            <p>Algorithm prediction vs. clinician endpoint.</p>
-          </div>
+    <!-- 2 · Refract ------------------------------------------------------- -->
+    <fieldset id="refractSection" class="stage-section" hidden>
+      <div class="locked-card">
+        <svg class="locked-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="4.5" y="10" width="15" height="11" rx="2.5" fill="currentColor"/></svg>
+        <div>
+          <strong>Prediction locked</strong>
+          <span id="lockedDetail">Hidden until you reveal.</span>
         </div>
-        <div id="comparisonContent"></div>
-        <button id="saveCaseBtn" class="button primary full">Save case</button>
-      </section>
+      </div>
 
-      <section class="card">
-        <div class="section-heading">
-          <div>
-            <h2>Study summary</h2>
-            <p>Stored locally on this device.</p>
-          </div>
-          <button id="clearDataBtn" class="button danger">Clear data</button>
-        </div>
-        <div id="stats" class="stats-grid"></div>
-      </section>
+      <div class="eye-columns">
+        <section class="eye-section">
+          <h2 class="group-header">Your final Rx · OD</h2>
+          <div class="group rx-table final" id="final-od"></div>
+        </section>
+        <section class="eye-section">
+          <h2 class="group-header">Your final Rx · OS</h2>
+          <div class="group rx-table final" id="final-os"></div>
+        </section>
+      </div>
 
-      <section class="card compact">
-        <details>
-          <summary>Algorithm v0 assumptions</summary>
-          <div class="prose">
-            <p>
-              v0 is intentionally conservative and transparent. It predicts from pre-refraction data only,
-              quantizes final axis to 5° steps, and uses configurable heuristics rather than machine learning.
-            </p>
-            <p>
-              Symptoms and medical-history fields are recorded as study variables but do not alter the v0 prediction.
-            </p>
-          </div>
-        </details>
-      </section>
-    </main>
+      <div class="group">
+        <label class="row"><span class="row-label">ADD</span><select id="finalAdd" class="row-select"></select></label>
+        <label class="row"><span class="row-label">Note</span><input id="finalNote" class="row-input" type="text" placeholder="Optional" /></label>
+      </div>
+      <p class="group-footer">Enter the prescription from your own exam. The algorithm's result stays hidden until you reveal it.</p>
+    </fieldset>
 
-    <footer>
-      <span>Project Dioptra · local-first research PWA</span>
-    </footer>
+    <!-- 3 · Compare ------------------------------------------------------- -->
+    <section id="compareSection" class="stage-section" hidden>
+      <div id="comparisonContent"></div>
+    </section>
+
+    <!-- Study ------------------------------------------------------------- -->
+    <h2 class="group-header study-header">Study</h2>
+    <div class="group">
+      <div id="stats" class="stats"></div>
+    </div>
+    <details class="group disclosure">
+      <summary class="row disclosure-row"><span class="row-label">Engine comparison</span><span class="row-detail" id="engineCompareDetail"></span></summary>
+      <div id="engineCompare" class="engine-compare"></div>
+    </details>
+    <p class="group-footer">Scores use power-vector error and an axis tolerance that tightens as cylinder grows (±14° at 0.25 D down to ±2° above 1.50 D). Don't tune either engine on a cohort that is still open.</p>
+
+    <div class="group">
+      <button id="clearDataBtn" class="row row-button destructive" type="button">Delete All Cases…</button>
+    </div>
+
+    <p class="footnote">Research prototype. Not a validated medical device and not a basis for prescribing or dispensing on its own. Data stays on this device.</p>
+  </main>
+
+  <div class="action-bar" id="actionBar">
+    <div class="action-inner">
+      <button id="primaryAction" class="button-primary" type="button">Lock Prediction</button>
+    </div>
   </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <dialog id="dialog" class="sheet-dialog">
+    <form method="dialog" class="sheet">
+      <div class="sheet-text">
+        <h3 id="dialogTitle"></h3>
+        <p id="dialogMessage"></p>
+      </div>
+      <div class="sheet-actions" id="dialogActions"></div>
+    </form>
+  </dialog>
 
   <script src="js/config.js"></script>
   <script src="js/algorithm.js"></script>
+  <script src="js/config-v03.js"></script>
+  <script src="js/engine-v03.js"></script>
+  <script src="js/scoring.js"></script>
+  <script src="js/engines.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/app.js"></script>
 </body>

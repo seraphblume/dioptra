@@ -1,4 +1,4 @@
-name: Verify frozen v0.2 contract
+name: Verify engines
 
 on:
   push:
@@ -20,8 +20,17 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Syntax check
+        run: for f in js/*.js tools/*.js tests/*.js sw.js; do node --check "$f"; done
+
       - name: Verify v0.2 freeze contract
         run: node tests/v0.2-freeze.test.js
+
+      - name: Verify v0.3 engine and scoring
+        run: node tests/v0.3-engine.test.js
+
+      - name: Verify exports and offset fitting
+        run: node tests/export-and-fit.test.js
 
       - name: Parse proposed v0.3 schema
         run: node -e 'JSON.parse(require("fs").readFileSync("docs/data-collection-v0.3.schema.json", "utf8"))'

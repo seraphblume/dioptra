@@ -1,49 +1,56 @@
-# Clinical source register
+# References and traceability
 
 ## Purpose
 
-This register records which supplied optometry training notes informed the Dioptra documentation, what was taken from each, and what was deliberately kept outside the spectacle-Rx predictor. It is a provenance record, not an endorsement or independent validation of every statement in the training material.
+This register records where the ideas behind Dioptra's design come from. It also records what was deliberately kept out of the spectacle-Rx predictor. It is a provenance record, not a claim that any rule is clinically validated.
 
-The source notes are not copied into this repository. Titles and source metadata below identify the user-supplied material reviewed on 2026-10-01. The referenced conversation exposed ten attachment bodies for direct review; no claim was imported from an attachment body that was not available in this execution.
+## Background clinical practice
 
-## Core refraction sources
+Dioptra's exam structure follows a conventional optometric workflow, as taught in standard optometry curricula. It relies only on general, widely taught practice and reproduces no proprietary material:
 
-| Source note | Source metadata recorded in the note | Dioptra use |
-|---|---|---|
-| `Eye_Exam_Protocol.md` | Arturo Torres Hernández, *Guía Práctica Para Realizar Un Examen De La Vista*, instructor guide, 14th ed. (2015); laminated sheets and forms | Defines exam stages; history and habitual-correction context; corrected/uncorrected distance and near VA; pinhole as a plausibility/triage observation; preliminary health/binocular tests as flags; ambulatory verification; separation of clinical findings from product selection. |
-| `Objective_Refraction.md` | Same training guide, sections XIII–XVI and retinoscopy appendix | Supports storing lensometry/habitual Rx, autorefractor, keratometry and retinoscopy as distinct objective observations. The autorefractor and retinoscopy are starting points, not final prescriptions. |
-| `Subjective_Refraction.md` | Same training guide, sections XVII–XXIII; training cards; dominant-eye appendix | Supports a distinct subjective endpoint; cylinder/sphere refinement provenance; the most-plus/least-minus principle; binocular-balance fields; refined ADD inputs; and explicit recording when the dispensed Rx differs from the subjective endpoint for adaptation or another clinical reason. |
+| Topic | What Dioptra takes from it |
+|---|---|
+| Exam sequence | History, preliminary tests, objective refraction, subjective refraction, verification. Objective readings are starting points, not prescriptions. |
+| Objective refraction | Habitual Rx (lensometry), autorefraction, keratometry and retinoscopy are distinct observations and are stored separately. |
+| Subjective refraction | The endpoint is the most plus / least minus sphere that gives best acuity. Cylinder refinement keeps the spherical equivalent (−0.50 D cylinder added ≈ +0.25 D sphere). Binocular balance applies only when acuity is equal. |
+| Habitual correction | It is the most important starting reference. A large change may be prescribed in stages, so the subjective endpoint and the issued Rx are different targets. |
+| Pinhole | Shows whether reduced acuity is plausibly refractive. It is a review signal, never a dioptric rule. |
+| Presbyopia | A tentative ADD from age and refractive state, refined at the patient's working distance (NRA/PRA balance or a near-distance check). |
+| Functional hyperopia | Latent hyperopia is commonly left uncorrected, so hyperopes may be refined differently from myopes. This motivates stratified offsets. |
 
-## Downstream and boundary sources
+## Published optics and standards
 
-These sources help define what occurs **after** a spectacle refractive endpoint. They are not evidence for modifying v0.2 sphere, cylinder, axis or ADD.
+| Reference | Used for |
+|---|---|
+| Thibos LN, Wheeler W, Horner D. *Power vectors: an application of Fourier analysis to the description and statistical analysis of refractive error.* Optom Vis Sci. 1997;74(6):367–375. | M, J0, J45 representation; vector medians, spreads and errors |
+| ANSI Z80.1, *Prescription Ophthalmic Lenses — Recommendations* | Cylinder-dependent axis tolerance used in scoring |
+| Effective power / vertex distance relation, F' = F / (1 − dF) | Converting readings between vertex distances, per principal meridian |
+| Javal's rule, simplified form (corneal astigmatism −0.50 D with the rule, +0.50 D against the rule) | Keratometry cross-check of autorefractor cylinder |
+| Half-amplitude reserve rule for near additions | Second, reported-only ADD estimate |
+| Transposition and the optical (power) cross | Minus-cylinder normalization; meridian-wise vertex conversion |
 
-| Source note | Relevant boundary lesson | Excluded from core predictor |
-|---|---|---|
-| `Spherical_CL_Fitting.md` | Spectacle-to-contact-lens conversion and on-eye fit are separate steps. | Spherical-equivalent conversion, vertex conversion and fit assessment are not spectacle-Rx rules. |
-| `Toric_CL_Fitting.md` | Toric selection, trial-lens assessment and rotation compensation occur after refraction. | LARS/CAAS and product availability do not alter the spectacle endpoint. |
-| `Toric_Trial_Lens_Tables.md` | Tables are product- and version-specific lookup aids. | No table value enters Dioptra's spectacle predictor. |
-| `Multifocal_CL_Fitting.md` | Contact-lens ADD ranges and over-refraction are a separate fitting workflow. | LO/MED/HI mapping, the +0.25 initial-lens step and brand-specific troubleshooting are excluded. |
-| `Contact_Lens_Fundamentals.md` | Lens material, wear, replacement, design and geometry describe a separate module. | Product/material properties are excluded. |
-| `Alcon_CL_Catalog.md` | Product parameters and ranges are time- and market-specific. | Catalog data and marketing claims are excluded. |
-| `Ophthalmic_Lens_Portfolio.md` | Lens design, treatment and product recommendation occur after clinical refraction. | Commercial product selection and claims are excluded. |
+## Deliberately excluded from the predictor
+
+These belong to steps **after** a spectacle refractive endpoint. They never change sphere, cylinder, axis or ADD:
+
+- spectacle-to-contact-lens conversion, contact-lens vertex tables, toric rotation compensation, contact-lens ADD categories;
+- progressive-lens fitting measurements, lens design and material choice;
+- any commercial product, brand or catalog data.
 
 ## Traceability rules
 
-1. A training statement may justify **collecting** a field without justifying its use as a prediction feature.
-2. Abnormal preliminary findings produce a flag or a request for clinician review; they do not directly add or subtract dioptres.
-3. Numeric thresholds not stated in the sources are marked as hypotheses and must be estimated and validated prospectively.
-4. Product-fitting rules remain in downstream modules and may not be imported into the spectacle-Rx model.
-5. The notes contain internal cautions and inconsistencies (for example, a retinoscopy appendix cylinder convention and product-table revisions). Dioptra must preserve the original observation and provenance rather than silently choosing a correction.
+1. A clinical practice may justify **collecting** a field without justifying its use as a prediction feature.
+2. Abnormal preliminary findings produce a flag or a request for clinician review. They never add or subtract dioptres.
+3. Numeric thresholds not taken from a published standard are marked *provisional*. They must be estimated and validated prospectively.
+4. Product-fitting rules stay in downstream modules and never enter the spectacle-Rx model.
+5. Raw observations and their provenance are kept, even when sources disagree. Dioptra does not silently choose a correction.
 
-## Design hypotheses, not source claims
+## Design hypotheses, not established claims
 
-The following concepts are proposals derived from the documented workflow and optical representation. They are not claims made by the source material:
+- combining objective measurements in power-vector space;
+- using the most-plus repeat reading as a proxy for the least-accommodated measurement;
+- refractive-state × age stratification of the spherical offset, with shrinkage toward a global mean;
+- converting cross-source disagreement into a review status;
+- any threshold for repeatability, disagreement or abstention.
 
-- combining objective measurements in power-vector space (`M`, `J0`, `J45`);
-- estimating a robust center and dispersion from repeated autorefractor readings;
-- converting cross-source disagreement into a calibrated confidence value;
-- choosing any threshold for low confidence, disagreement, out-of-distribution detection or abstention;
-- learning a separate prescribing/adaptation layer after the subjective endpoint.
-
-These items belong to v0.3 research and must not be back-ported into Cohort B.
+Each is implemented so that it can be measured in shadow mode. None is enabled in the study prediction until a closed cohort supports it.

@@ -2,7 +2,7 @@
 
 ## What Dioptra is predicting
 
-The supplied procedure separates several clinically different values that must not be collapsed into one target:
+A conventional refraction moves through clinically different values. They must not be collapsed into one target:
 
 ```text
 objective observations
@@ -12,81 +12,75 @@ objective observations
   -> product fitting
 ```
 
-For Dioptra, the intended long-term targets are therefore:
+The long-term targets are:
 
-1. **Subjective refractive endpoint**: the optically refined S/C/A result before adaptation or dispensing choices.
-2. **Prescribed Rx**: the value actually issued after binocular comfort, habitual-correction history, adaptation and clinician judgment are considered.
+1. **Subjective refractive endpoint.** The optically refined S/C/A result, before adaptation or dispensing choices.
+2. **Prescribed Rx.** The value actually issued, after binocular comfort, habitual-correction history, adaptation and clinician judgment.
 
-A difference between these targets is not automatically model error. It is a prescribing decision that needs an explicit reason code.
+A difference between these two is not automatically model error. It is a prescribing decision that needs an explicit reason code.
 
-The current v0.2.0 study does not implement this decomposition. It predicts from the selected autorefractor S/C/A and compares with the clinician-entered final Rx. The richer structure is proposed for v0.3 data collection only.
+The v0.2.0 study predicts from the selected autorefractor S/C/A and compares with the clinician's final Rx. The v0.3.0 shadow engine still targets the final Rx, but it stores the richer evidence needed to separate the two targets later.
 
 ## Evidence sources to keep separate
 
-The objective-refraction source identifies four different starting observations:
+A refraction usually starts from four objective observations:
 
 - habitual spectacles measured by lensometer;
-- selected and, where available, repeated autorefractor readings;
+- the autorefractor's selected reading and its repeat readings;
 - keratometry;
 - retinoscopy.
 
-They do not measure identical things. Dioptra should retain each raw observation with its method, eye, units and provenance. Agreement can later support confidence; disagreement should trigger review rather than a silent average.
+They do not measure the same thing. Dioptra keeps each raw observation with its method, eye, units and provenance. Agreement can later support confidence; disagreement triggers review rather than a silent average.
 
-The subjective-refraction source then adds process evidence:
+Subjective refraction then adds process evidence: starting Rx, cylinder axis and power refinement, sphere refinement, best monocular VA, binocular-balance eligibility and result, dominant eye, and tentative and refined ADD.
 
-- tentative starting Rx;
-- cylinder axis and power refinement;
-- sphere refinement;
-- best-achieved monocular VA;
-- binocular-balance eligibility and result;
-- dominant eye when relevant;
-- tentative and refined ADD.
+## What v0.3 takes from refraction practice
 
-This process data explains *how* an endpoint was reached and supports later error analysis without changing the frozen v0.2 output.
+| Practice | v0.3 behaviour |
+|---|---|
+| Repeat autorefractor readings vary with accommodation and fixation | All readings are kept. The engine computes the median, the most-plus reading and the spread, and flags poor repeatability. |
+| The subjective endpoint aims for the most plus / least minus sphere with best acuity | The most-plus reading is computed as a candidate estimator, so it can be tested. |
+| Myopes and hyperopes are refined differently; latent hyperopia is often left uncorrected; accommodation declines with age | The spherical offset is stratified by refractive state and age band instead of being one constant. |
+| Cylinder refinement keeps the spherical equivalent | Prediction happens in power-vector space. Cylinder changes and rounding move the sphere by half the cylinder change. |
+| Axis precision matters more as cylinder grows | 1° axis resolution at ≥ 0.75 D. Scoring uses a cylinder-dependent tolerance. |
+| Vertex distance changes effective power, noticeably above about ±4 D | Readings are normalized to 12 mm per principal meridian when the instrument reports another distance. |
+| Keratometry estimates total astigmatism through Javal's rule | Used only as a cross-check flag. |
+| Tentative ADD depends on age, refractive state and the patient's working distance | Refractive state comes from the raw reading. The ADD is adjusted for working distance. An amplitude-based estimate is reported alongside. |
 
 ## Clinically useful roles for preliminary tests
 
-The preliminary-test source places history, VA, pinhole, cover test, near point of convergence, colour vision, external examination, motility, pupils and confrontation fields before refraction. Their safest initial use in Dioptra is:
+History, VA, pinhole, cover test, near point of convergence, colour vision, external examination, motility, pupils and confrontation fields come before refraction. Their safest uses in Dioptra are:
 
-- **context**: chief complaint, visual task and habitual-correction experience;
-- **data-quality checks**: was the expected test performed under the documented correction condition?;
-- **reason codes**: why a subjective test was not usable or why the case needs review;
-- **safety flags**: abnormal or incomplete screening should prevent an unqualified high-confidence presentation;
-- **stratification**: future analysis may examine subgroups after adequate sample sizes exist.
+- **context:** chief complaint, visual task and habitual-correction experience;
+- **data-quality checks:** was the test performed under the documented correction condition?;
+- **reason codes:** why a subjective test was not usable, or why the case needs review;
+- **safety flags:** an abnormal or incomplete screen prevents an unqualified high-confidence presentation;
+- **stratification:** subgroup analysis once sample sizes allow.
 
-They are not direct dioptric switches. In particular, pinhole improvement must not automatically add or subtract sphere, and colour-vision status must not independently alter the Rx.
+They are not dioptric switches. Pinhole improvement never adds or subtracts sphere, and colour-vision status never alters the Rx.
 
 ## Habitual correction
 
-Both the objective and subjective sources give special importance to the patient's habitual correction. A yes/no field loses the clinically useful information. Future collection should include, per eye:
+The habitual correction is the most important starting reference. A yes/no field loses most of its value. Future collection should include, per eye:
 
 - measured habitual S/C/A and ADD;
-- age of the prescription when known;
-- corrected VA with that prescription;
-- patient satisfaction and complaint;
-- whether the patient is adapted to it;
-- vector change from habitual to objective, subjective and prescribed values.
+- age of the prescription, when known;
+- corrected VA with it;
+- satisfaction, complaint and adaptation;
+- the vector change from habitual to objective, subjective and prescribed values.
 
-The subjective source also describes staged prescribing when a full change may be difficult to tolerate. This is the main reason to keep the subjective endpoint and issued prescription separate.
+A large change may be prescribed in stages. This is the main reason to keep the subjective endpoint and the issued prescription separate.
 
 ## VA and pinhole
 
-The eye-exam source records distance VA with and without correction, near VA at the patient's working distance, and pinhole when VA is worse than 20/30. In Dioptra:
+- Preserve the original notation and correction condition.
+- Treat pinhole as evidence about whether ordinary refractive blur explains reduced VA.
+- v0.3 flags reduced VA (worse than 20/30) with no pinhole improvement. It does not infer disease.
+- Distinguish not performed, not indicated, untestable and missing.
 
-- preserve the original notation and correction condition;
-- treat pinhole as evidence about whether ordinary refractive blur plausibly explains reduced VA;
-- compare achieved best-corrected VA with the recorded pinhole result as a review check;
-- do not infer disease or prescribe from pinhole alone;
-- distinguish not performed, not indicated, untestable and missing.
+## Optical representation
 
-## Cylinder, sphere and optical invariants
-
-The subjective source explicitly couples cylinder and sphere during Jackson cross-cylinder refinement: adding −0.50 D cylinder is accompanied by +0.25 D sphere to preserve spherical equivalent. This supports two safeguards:
-
-1. represent S/C/A changes in a way that preserves the combined optical effect;
-2. run a spherical-equivalent sanity check after all component changes, rather than trusting apparently small independent adjustments.
-
-Spherical equivalent is not enough to describe astigmatic prescriptions. Future comparison should retain S/C/A and use power vectors:
+Spherical equivalent alone does not describe astigmatic prescriptions. Dioptra keeps S/C/A and also uses power vectors:
 
 ```text
 M   = S + C / 2
@@ -94,35 +88,24 @@ J0  = (-C / 2) cos(2A)
 J45 = (-C / 2) sin(2A)
 ```
 
-This representation is a Dioptra design choice. The training sources support the need to preserve optical relationships but do not prescribe a statistical vector model.
+(Thibos et al., 1997.) Vector error is the primary combined error measure. SE remains a monitor.
 
 ## Binocular and ADD layers
 
-The procedure performs binocular balance only after the eyes reach equal VA and favors the dominant eye if equality cannot be achieved. A future model should therefore produce monocular candidates first, then assess binocular consistency. It should not finalize OD and OS as unrelated records.
+Binocular balance is done only after the two eyes reach equal VA, and it favours the dominant eye when equality can't be reached. A future model should produce monocular candidates first and then check binocular consistency, rather than treating OD and OS as unrelated records.
 
-For presbyopia, the source distinguishes tentative ADD from refinement using NRA/PRA or a near-distance check. The record should keep:
-
-- the method used for tentative ADD;
-- actual working distance;
-- NRA and PRA when performed;
-- the result of the distance check when used;
-- refined ADD and comfortable near VA;
-- prescribed ADD per eye, allowing an asymmetric result to be represented even when uncommon.
-
-The current v0.2 age/refractive-state table remains frozen. These fields are for future evaluation, not a mid-cohort rule change.
+For presbyopia, record the tentative-ADD method, the actual working distance, NRA and PRA when performed, the near-distance check result, the refined ADD, the comfortable near VA and the prescribed ADD per eye.
 
 ## Scope boundary
-
-The contact-lens and ophthalmic-product sources confirm a clean boundary:
 
 ```text
 clinical refraction -> prescription -> product selection/fitting
 ```
 
-Spectacle-to-contact-lens conversion, vertex compensation, toric rotation, contact-lens ADD ranges, progressive fitting measurements, material choice and commercial product selection are downstream modules. None may alter the v0.2 spectacle prediction.
+Contact-lens conversion, vertex tables for contact lenses, toric rotation, contact-lens ADD ranges, progressive fitting measurements, material choice and product selection are downstream modules. None may alter the spectacle prediction.
 
 ## Safety position
 
-Dioptra is a research prototype, not a diagnostic or autonomous prescribing system. Future confidence must describe evidence quality and model validation, not clinical certainty. The system must always show source measurements, flags and reasons; preserve the clinician's independent exam; and allow abstention when inputs are incomplete, inconsistent or outside the validated population.
+Dioptra is a research prototype, not a diagnostic or autonomous prescribing system. A review status describes evidence quality, not clinical certainty. The interface always shows source measurements, flags and reasons, keeps the clinician's exam independent and blinded, and abstains when inputs are incomplete.
 
-See [the source register](source-register.md) for claim provenance and [the v0.3 notes](v0.3-design-notes.md) for proposed implementation.
+See [references and traceability](source-register.md), the [v0.3 engine specification](v0.3-engine.md) and the [v0.3 design notes](v0.3-design-notes.md).

@@ -1,6 +1,6 @@
 # Proposed v0.3 data collection
 
-Status: **design only**. This document and its schema do not change the v0.2.0 UI, stored records or Cohort B export.
+Status: **partly collected.** The study record and the Cohort B study CSV are unchanged. The interface now also collects the autorefractor repeat readings, reliability digits, vertex distance, PD, near working distance, near point and keratometry. These are stored under `shadow.observations` with `shadowOnly: true`, and only the v0.3 shadow engine uses them. The remaining fields below are still design only.
 
 Machine-readable draft: [`data-collection-v0.3.schema.json`](data-collection-v0.3.schema.json)
 
@@ -46,16 +46,16 @@ The schema uses a reusable `procedureStatus` structure for this purpose.
 
 ## Autorefractor readings
 
-Store the printed/selected line and each repeated reading separately. An instrument's undocumented quality number should be captured as `qualityTokenRaw` with a label only when the instrument manual confirms its meaning. Instrument working distance is not the patient's preferred near working distance.
+Store the printed/selected line and each repeated reading separately (*collected*). The reliability digit printed after each reading is stored as `reliability` and treated as opaque until the instrument manual confirms its meaning. Instrument working distance is not the patient's preferred near working distance.
 
-Suggested derived values, computed after collection:
+Derived values (computed by the v0.3 engine and included in the engine-comparison CSV):
 
 - median `M`, `J0`, `J45` across readings;
 - robust spread for each vector component;
 - distance from machine-selected result to the robust center;
 - reading count and missingness.
 
-No dispersion threshold is fixed in this draft.
+Review thresholds are provisional (`js/config-v03.js`) and are not used to alter any dioptric value.
 
 ## Endpoint and prescribing reason codes
 

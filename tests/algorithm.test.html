@@ -1,8 +1,11 @@
-Dioptra browser testsPASS — v0.2 versionPASS — v0.2 axis 178→180PASS — v0.2 axis circular 180↔5=5PASS — v0.2 frozen rulePASS — v0.2 SE budgetPASS — v0.3 shadow mode by defaultPASS — v0.3 keeps 1° axis above 0.75 DPASS — ANSI axis tolerance
-
-
-
-
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Dioptra browser tests</title>
+<style>body{font:15px/1.4 -apple-system,system-ui,sans-serif;margin:24px}p{margin:4px 0}.fail{color:#d70015}</style></head>
+<body><h1>Dioptra browser tests</h1><div id="out"></div>
+<script src="../js/config.js"></script><script src="../js/algorithm.js"></script>
+<script src="../js/config-v03.js"></script><script src="../js/engine-v03.js"></script>
+<script src="../js/scoring.js"></script><script src="../js/engines.js"></script>
+<script>
 const out=document.getElementById("out");
 function test(name,fn){try{fn();out.innerHTML+=`<p>PASS — ${name}</p>`}catch(e){out.innerHTML+=`<p class="fail">FAIL — ${name}: ${e.message}</p>`}}
 function eq(a,b){if(a!==b)throw new Error(`${a} !== ${b}`)}
@@ -31,4 +34,4 @@ test("v0.3 keeps 1° axis above 0.75 D",()=>{
  eq(p.od.sphere,-2.75); eq(p.od.axis,178); eq(p.os.axis,168);
 });
 test("ANSI axis tolerance",()=>{eq(DioptraScoring.axisTolerance(1.25),3);eq(DioptraScoring.axisTolerance(2),2)});
-
+</script></body></html>

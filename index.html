@@ -1,297 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Dioptra" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Project Dioptra</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="assets/icon-192.png" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body data-stage="measure">
+  <header class="navbar" id="navbar">
+    <div class="navbar-inner">
+      <button id="newCaseBtn" class="nav-button" type="button">New Case</button>
+      <span class="nav-title" id="navTitle">Dioptra</span>
+      <button id="exportBtn" class="nav-button" type="button">Export</button>
+    </div>
+  </header>
 
-  
-    
-      New Case
-      RX-0002
-      Export
-    
-  
+  <main class="content">
+    <div class="large-title">
+      <h1 id="caseTitle">Case</h1>
+      <p id="engineLine" class="title-sub"></p>
+    </div>
 
-  
-    
-      Case RX-0002
-      Study engine v0.2.0 · v0.3 runs in shadow
-    
+    <ol class="stepper" aria-label="Case progress">
+      <li data-step="measure"><span class="step-dot">1</span>Measure</li>
+      <li data-step="refract"><span class="step-dot">2</span>Refract</li>
+      <li data-step="compare"><span class="step-dot">3</span>Compare</li>
+    </ol>
 
-    
-      1Measure
-      2Refract
-      3Compare
-    
+    <!-- 1 · Measure ------------------------------------------------------- -->
+    <fieldset id="measureSection" class="stage-section">
+      <h2 class="group-header">Patient</h2>
+      <div class="group">
+        <label class="row">
+          <span class="row-label">Age</span>
+          <input id="age" class="row-input num" type="text" inputmode="numeric" autocomplete="off" placeholder="Years" />
+        </label>
+        <div class="row">
+          <span class="row-label">Previous Rx</span>
+          <div class="segmented" id="previousRxKnown" data-value="" role="radiogroup" aria-label="Previous Rx known">
+            <button type="button" data-value="" role="radio">Unknown</button>
+            <button type="button" data-value="yes" role="radio">Yes</button>
+            <button type="button" data-value="no" role="radio">No</button>
+          </div>
+        </div>
+      </div>
 
-    
-    
-      Patient
-      
-        
-          Age
-          
-        
-        
-          Previous Rx
-          
-            Unknown
-            Yes
-            No
-          
-        
-      
+      <div class="eye-columns">
+        <section class="eye-section" data-eye="od">
+          <h2 class="group-header">Right eye · OD</h2>
+          <div class="group rx-table" id="ar-od"></div>
+          <div class="group">
+            <label class="row"><span class="row-label">Distance VA</span><select id="vaOd" class="row-select"></select></label>
+            <label class="row"><span class="row-label">Pinhole VA</span><select id="phOd" class="row-select"></select></label>
+          </div>
+        </section>
+        <section class="eye-section" data-eye="os">
+          <h2 class="group-header">Left eye · OS</h2>
+          <div class="group rx-table" id="ar-os"></div>
+          <div class="group">
+            <label class="row"><span class="row-label">Distance VA</span><select id="vaOs" class="row-select"></select></label>
+            <label class="row"><span class="row-label">Pinhole VA</span><select id="phOs" class="row-select"></select></label>
+          </div>
+        </section>
+      </div>
+      <p class="group-footer">Copy the three readings and the bracketed line from the autorefractor ticket. Only the bracketed line is required; the readings let the v0.3 engine measure repeatability. Q is the reliability digit printed after each reading.</p>
 
-      
-        
-          Right eye · OD
-          
-        SPHCYLAXISQ
-          
-            1
-            −
-            −
-            
-            
-          
-          
-            2
-            −
-            −
-            
-            
-          
-          
-            3
-            −
-            −
-            
-            
-          
-          
-            ‹ ›
-            −
-            −
-            
-            
-          
-          
-            Distance VA—20/40020/30020/20020/10020/8020/7020/6020/5020/4020/3020/2520/2020/1520/10
-            Pinhole VA—20/40020/30020/20020/10020/8020/7020/6020/5020/4020/3020/2520/2020/1520/10
-          
-        
-        
-          Left eye · OS
-          
-        SPHCYLAXISQ
-          
-            1
-            −
-            −
-            
-            
-          
-          
-            2
-            −
-            −
-            
-            
-          
-          
-            3
-            −
-            −
-            
-            
-          
-          
-            ‹ ›
-            −
-            −
-            
-            
-          
-          
-            Distance VA—20/40020/30020/20020/10020/8020/7020/6020/5020/4020/3020/2520/2020/1520/10
-            Pinhole VA—20/40020/30020/20020/10020/8020/7020/6020/5020/4020/3020/2520/2020/1520/10
-          
-        
-      
-      Copy the three readings and the bracketed line from the autorefractor ticket. Only the bracketed line is required; the readings let the v0.3 engine measure repeatability. Q is the reliability digit printed after each reading.
+      <h2 class="group-header">Instrument &amp; near</h2>
+      <div class="group">
+        <label class="row">
+          <span class="row-label">Vertex distance</span>
+          <span class="row-value"><input id="vertexMm" class="row-input num" type="text" inputmode="decimal" placeholder="12" /><span class="unit">mm</span></span>
+        </label>
+        <div class="row">
+          <span class="row-label">PD distance / near</span>
+          <span class="row-value">
+            <input id="pdDistance" class="row-input num short" type="text" inputmode="decimal" placeholder="—" aria-label="Distance PD" />
+            <span class="unit">/</span>
+            <input id="pdNear" class="row-input num short" type="text" inputmode="decimal" placeholder="—" aria-label="Near PD" />
+            <span class="unit">mm</span>
+          </span>
+        </div>
+        <label class="row">
+          <span class="row-label">Near working distance</span>
+          <span class="row-value"><input id="nearWd" class="row-input num" type="text" inputmode="decimal" placeholder="—" /><span class="unit">cm</span></span>
+        </label>
+        <label class="row">
+          <span class="row-label">Near point</span>
+          <span class="row-value"><input id="nearPoint" class="row-input num" type="text" inputmode="decimal" placeholder="—" /><span class="unit">cm</span></span>
+        </label>
+      </div>
+      <p class="group-footer">Vertex distance is the VD printed on the ticket. Near fields are optional and only feed the v0.3 ADD estimate. Near point is the push-up blur point, measured through the distance correction.</p>
 
-      Instrument & near
-      
-        
-          Vertex distance
-          mm
-        
-        
-          PD distance / near
-          
-            
-            /
-            
-            mm
-          
-        
-        
-          Near working distance
-          cm
-        
-        
-          Near point
-          cm
-        
-      
-      Vertex distance is the VD printed on the ticket. Near fields are optional and only feed the v0.3 ADD estimate. Near point is the push-up blur point, measured through the distance correction.
+      <details class="group disclosure" id="kSection">
+        <summary class="row disclosure-row"><span class="row-label">Keratometry</span><span class="row-detail">Optional</span></summary>
+        <div id="k-fields"></div>
+      </details>
 
-      
-        KeratometryOptional
-        
-      
-        OD K1
-        
-          
-          @
-          
-        
-      
-      
-        OD K2
-        
-          
-          @
-          
-        
-      
-      
-        OS K1
-        
-          
-          @
-          
-        
-      
-      
-        OS K2
-        
-          
-          @
-          
-        
-      
-      
+      <h2 class="group-header">History</h2>
+      <div class="group">
+        <div class="row stacked">
+          <span class="row-caption">Symptoms</span>
+          <div class="chips" id="symptomChips"></div>
+          <input id="symptomOtherText" class="inline-input" type="text" placeholder="Other symptom (optional)" />
+        </div>
+        <div class="row stacked">
+          <span class="row-caption">Medical background</span>
+          <div class="chips" id="medicalChips"></div>
+        </div>
+      </div>
+    </fieldset>
 
-      History
-      
-        
-          Symptoms
-          TearingBlurred visionBurning / irritationItchingDischargeInfectionHeadacheFlashesDry eyeOther
-          
-        
-        
-          Medical background
-          DiabetesHypertensionPregnancy
-        
-      
-    
+    <!-- 2 · Refract ------------------------------------------------------- -->
+    <fieldset id="refractSection" class="stage-section" hidden>
+      <div class="locked-card">
+        <svg class="locked-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="4.5" y="10" width="15" height="11" rx="2.5" fill="currentColor"/></svg>
+        <div>
+          <strong>Prediction locked</strong>
+          <span id="lockedDetail">Hidden until you reveal.</span>
+        </div>
+      </div>
 
-    
-    
-      
-        
-        
-          Prediction locked
-          Hidden until you reveal.
-        
-      
+      <div class="eye-columns">
+        <section class="eye-section">
+          <h2 class="group-header">Your final Rx · OD</h2>
+          <div class="group rx-table final" id="final-od"></div>
+        </section>
+        <section class="eye-section">
+          <h2 class="group-header">Your final Rx · OS</h2>
+          <div class="group rx-table final" id="final-os"></div>
+        </section>
+      </div>
 
-      
-        
-          Your final Rx · OD
-          
-        SPHCYLAXIS
-        
-          OD
-          −
-          −
-          —5°10°15°20°25°30°35°40°45°50°55°60°65°70°75°80°85°90°95°100°105°110°115°120°125°130°135°140°145°150°155°160°165°170°175°180°
-        
-        
-        
-          Your final Rx · OS
-          
-        SPHCYLAXIS
-        
-          OS
-          −
-          −
-          —5°10°15°20°25°30°35°40°45°50°55°60°65°70°75°80°85°90°95°100°105°110°115°120°125°130°135°140°145°150°155°160°165°170°175°180°
-        
-        
-      
+      <div class="group">
+        <label class="row"><span class="row-label">ADD</span><select id="finalAdd" class="row-select"></select></label>
+        <label class="row"><span class="row-label">Note</span><input id="finalNote" class="row-input" type="text" placeholder="Optional" /></label>
+      </div>
+      <p class="group-footer">Enter the prescription from your own exam. The algorithm's result stays hidden until you reveal it.</p>
+    </fieldset>
 
-      
-        ADDNone+0.25+0.50+0.75+1.00+1.25+1.50+1.75+2.00+2.25+2.50+2.75+3.00+3.25+3.50
-        Note
-      
-      Enter the prescription from your own exam. The algorithm's result stays hidden until you reveal it.
-    
+    <!-- 3 · Compare ------------------------------------------------------- -->
+    <section id="compareSection" class="stage-section" hidden>
+      <div id="comparisonContent"></div>
+    </section>
 
-    
-    
-      
-    
+    <!-- Study ------------------------------------------------------------- -->
+    <h2 class="group-header study-header">Study</h2>
+    <div class="group">
+      <div id="stats" class="stats"></div>
+    </div>
+    <details class="group disclosure">
+      <summary class="row disclosure-row"><span class="row-label">Engine comparison</span><span class="row-detail" id="engineCompareDetail"></span></summary>
+      <div id="engineCompare" class="engine-compare"></div>
+    </details>
+    <p class="group-footer">Scores use power-vector error and an axis tolerance that tightens as cylinder grows (±14° at 0.25 D down to ±2° above 1.50 D). Don't tune either engine on a cohort that is still open.</p>
 
-    
-    Study
-    
-      1Cases100%Eyes matched100%Sphere ±0.25 D100%Cylinder ±0.25 D100%Axis in tolerance100%Exact eyes
-    
-    
-      Engine comparison1 case
-      EngineEyesMatchBias|SE|VectorStudy · v0.2.02100%
-        0.000.00
-        0.00Shadow · v0.3.02100%
-        0.000.00
-        0.04v0.3 selected2100%
-        0.000.00
-        0.04v0.3 median2100%
-        0.000.00
-        0.04v0.3 most plus2100%
-        −0.130.13
-        0.15
-    
-    Scores use power-vector error and an axis tolerance that tightens as cylinder grows (±14° at 0.25 D down to ±2° above 1.50 D). Don't tune either engine on a cohort that is still open.
+    <div class="group">
+      <button id="clearDataBtn" class="row row-button destructive" type="button">Delete All Cases…</button>
+    </div>
 
-    
-      Delete All Cases…
-    
+    <p class="footnote">Research prototype. Not a validated medical device and not a basis for prescribing or dispensing on its own. Data stays on this device.</p>
+  </main>
 
-    Research prototype. Not a validated medical device and not a basis for prescribing or dispensing on its own. Data stays on this device.
-  
+  <div class="action-bar" id="actionBar">
+    <div class="action-inner">
+      <button id="primaryAction" class="button-primary" type="button">Lock Prediction</button>
+    </div>
+  </div>
 
-  
-    
-      Lock Prediction
-    
-  
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  
+  <dialog id="dialog" class="sheet-dialog">
+    <form method="dialog" class="sheet">
+      <div class="sheet-text">
+        <h3 id="dialogTitle"></h3>
+        <p id="dialogMessage"></p>
+      </div>
+      <div class="sheet-actions" id="dialogActions"></div>
+    </form>
+  </dialog>
 
-  
-    
-      
-        
-        
-      
-      
-    
-  
-
-  
-  
-  
-  
-  
-  
-  
-  
-
-
+  <script src="js/config.js"></script>
+  <script src="js/algorithm.js"></script>
+  <script src="js/config-v03.js"></script>
+  <script src="js/engine-v03.js"></script>
+  <script src="js/scoring.js"></script>
+  <script src="js/engines.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

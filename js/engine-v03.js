@@ -1,4 +1,4 @@
-// Project Dioptra â€” v0.3 engine.
+// Project Dioptra — v0.3 engine.
 //
 // Pipeline per eye:
 //   raw readings -> minus-cylinder form -> vertex normalisation (per principal meridian)

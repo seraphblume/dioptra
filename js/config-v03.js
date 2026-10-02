@@ -1,4 +1,4 @@
-// Project Dioptra â€” v0.3 engine configuration.
+// Project Dioptra — v0.3 engine configuration.
 //
 // The v0.3 engine runs in SHADOW mode while Cohort B is open: it is computed and stored
 // with every case, but the locked study prediction still comes from the frozen v0.2 path
@@ -21,9 +21,9 @@ window.DIOPTRA_V03_CONFIG = {
 
   // Which centre of the autorefractor readings feeds the prediction.
   // All three are computed and stored with every case so they can be compared later.
-  //   "selected" â€” the line the instrument marks as its result
-  //   "median"   â€” component-wise median of the readings in power-vector space
-  //   "mostPlus" â€” the reading with the most positive M (most plus / least minus)
+  //   "selected" — the line the instrument marks as its result
+  //   "median"   — component-wise median of the readings in power-vector space
+  //   "mostPlus" — the reading with the most positive M (most plus / least minus)
   estimator: "median",
 
   vertex: {
@@ -91,6 +91,6 @@ window.DIOPTRA_V03_CONFIG = {
   },
 
   ui: {
-    finalAxisStep: 5 // keep 5Â° entry while Cohort B is open; set to 1 when v0.3 becomes active
+    finalAxisStep: 5 // keep 5° entry while Cohort B is open; set to 1 when v0.3 becomes active
   }
 };

@@ -15,7 +15,7 @@
     { id: "R1", label: "1", repeat: true },
     { id: "R2", label: "2", repeat: true },
     { id: "R3", label: "3", repeat: true },
-    { id: "Sel", label: "â€¹ â€º", repeat: false }
+    { id: "Sel", label: "‹ ›", repeat: false }
   ];
   const SYMPTOMS = [
     ["tearing", "Tearing"],
@@ -57,26 +57,26 @@
 
   // ------------------------------------------------------------------ formatting
 
-  const MINUS = "âˆ’";
+  const MINUS = "−";
 
   function fmtPower(n) {
-    if (n == null || !Number.isFinite(n)) return "â€”";
+    if (n == null || !Number.isFinite(n)) return "—";
     if (Math.abs(n) < 1e-9) return "0.00";
     return (n > 0 ? "+" : MINUS) + Math.abs(n).toFixed(2);
   }
 
   function fmtDelta(n) {
-    if (n == null || !Number.isFinite(n)) return "â€”";
+    if (n == null || !Number.isFinite(n)) return "—";
     if (Math.abs(n) < 1e-9) return "0.00";
     return (n > 0 ? "+" : MINUS) + Math.abs(n).toFixed(2);
   }
 
   function fmtAxis(n) {
-    return n == null || !Number.isFinite(n) ? "â€”" : `${Math.round(n)}Â°`;
+    return n == null || !Number.isFinite(n) ? "—" : `${Math.round(n)}°`;
   }
 
   function pct(rate) {
-    return rate == null ? "â€”" : `${Math.round(rate * 100)}%`;
+    return rate == null ? "—" : `${Math.round(rate * 100)}%`;
   }
 
   function esc(text) {
@@ -115,8 +115,8 @@
 
   function buildFinalTables() {
     const step = (v03.ui && v03.ui.finalAxisStep) || 5;
-    const axisOptions = ['<option value="">â€”</option>']
-      .concat(Array.from({ length: Math.floor(180 / step) }, (_, i) => (i + 1) * step).map(v => `<option value="${v}">${v}Â°</option>`))
+    const axisOptions = ['<option value="">—</option>']
+      .concat(Array.from({ length: Math.floor(180 / step) }, (_, i) => (i + 1) * step).map(v => `<option value="${v}">${v}°</option>`))
       .join("");
     for (const eye of EYES) {
       const p = `${eye.id}Fin`;
@@ -138,7 +138,7 @@
         <span class="row-value">
           <input id="${eye.id}K1" class="row-input num short" type="text" inputmode="decimal" placeholder="D" aria-label="${eye.short} K1 dioptres" />
           <span class="unit">@</span>
-          <input id="${eye.id}K1Ax" class="row-input num short" type="text" inputmode="numeric" placeholder="Â°" aria-label="${eye.short} K1 axis" />
+          <input id="${eye.id}K1Ax" class="row-input num short" type="text" inputmode="numeric" placeholder="°" aria-label="${eye.short} K1 axis" />
         </span>
       </div>
       <div class="row">
@@ -146,7 +146,7 @@
         <span class="row-value">
           <input id="${eye.id}K2" class="row-input num short" type="text" inputmode="decimal" placeholder="D" aria-label="${eye.short} K2 dioptres" />
           <span class="unit">@</span>
-          <input id="${eye.id}K2Ax" class="row-input num short" type="text" inputmode="numeric" placeholder="Â°" aria-label="${eye.short} K2 axis" />
+          <input id="${eye.id}K2Ax" class="row-input num short" type="text" inputmode="numeric" placeholder="°" aria-label="${eye.short} K2 axis" />
         </span>
       </div>`).join("");
     $("k-fields").innerHTML = rows;
@@ -160,7 +160,7 @@
   }
 
   function populateSelects() {
-    const va = '<option value="">â€”</option>' + cfg.visualAcuity.map(v => `<option value="${v.snellen}">${v.snellen}</option>`).join("");
+    const va = '<option value="">—</option>' + cfg.visualAcuity.map(v => `<option value="${v.snellen}">${v.snellen}</option>`).join("");
     ["vaOd", "phOd", "vaOs", "phOs"].forEach(id => { $(id).innerHTML = va; });
     $("finalAdd").innerHTML = '<option value="">None</option>' +
       Array.from({ length: 14 }, (_, i) => ((i + 1) * 0.25).toFixed(2)).map(v => `<option value="${v}">+${v}</option>`).join("");
@@ -176,7 +176,7 @@
   function parsed(id) {
     const t = rawText(id);
     if (t === "") return null;
-    const n = Number(t.replace(/^[+âˆ’-]/, m => (m === "+" ? "" : "-")));
+    const n = Number(t.replace(/^[+−-]/, m => (m === "+" ? "" : "-")));
     return Number.isFinite(n) ? n : NaN;
   }
 
@@ -184,7 +184,7 @@
     const n = parsed(id);
     if (n == null || Number.isNaN(n)) return n;
     const el = $(id);
-    const typedSign = /^[+âˆ’-]/.test(rawText(id));
+    const typedSign = /^[+−-]/.test(rawText(id));
     const sign = typedSign ? Math.sign(n) || -1 : Number(el.dataset.sign || -1);
     const mag = Math.abs(n);
     return mag === 0 ? 0 : mag * sign;
@@ -373,7 +373,7 @@
       const cur = order.indexOf(stage);
       li.classList.toggle("current", i === cur);
       li.classList.toggle("done", i < cur);
-      li.querySelector(".step-dot").textContent = i < cur ? "âœ“" : String(i + 1);
+      li.querySelector(".step-dot").textContent = i < cur ? "✓" : String(i + 1);
     });
 
     $("primaryAction").textContent = { measure: "Lock Prediction", refract: "Reveal Comparison", compare: "Save Case" }[stage];
@@ -397,7 +397,7 @@
     state.observations = observations;
     const p = state.run.primary.prediction;
     const time = new Date(p.lockedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-    $("lockedDetail").textContent = `${engineLabel(state.run.primary.id)} at ${time} Â· hidden until you reveal.`;
+    $("lockedDetail").textContent = `${engineLabel(state.run.primary.id)} at ${time} · hidden until you reveal.`;
     setStage("refract");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -491,20 +491,20 @@
 
   function deltaPill(value, ok, kind = "power") {
     if (value == null || !Number.isFinite(value)) return `<span class="pill na">n/a</span>`;
-    const text = kind === "axis" ? `${Math.round(value)}Â°` : fmtDelta(value);
+    const text = kind === "axis" ? `${Math.round(value)}°` : fmtDelta(value);
     return `<span class="pill ${ok ? "ok" : "off"}">${text}</span>`;
   }
 
   function eyeTable(eye, pred, actual, title) {
     const s = scoring.scoreEye(pred, actual);
     const axisCell = s.axisApplicable
-      ? `${deltaPill(s.axisError, s.axisWithinTolerance, "axis")}<span class="tol">Â±${s.axisTolerance}Â°</span>`
+      ? `${deltaPill(s.axisError, s.axisWithinTolerance, "axis")}<span class="tol">±${s.axisTolerance}°</span>`
       : `<span class="pill na">n/a</span>`;
     return `
       <h2 class="group-header">${esc(title)}</h2>
       <div class="group">
         <div class="cmp">
-          <span class="cmp-h">${eye.short}</span><span class="cmp-h">Dioptra</span><span class="cmp-h">You</span><span class="cmp-h" style="padding-right:16px">Î”</span>
+          <span class="cmp-h">${eye.short}</span><span class="cmp-h">Dioptra</span><span class="cmp-h">You</span><span class="cmp-h" style="padding-right:16px">Δ</span>
           <span class="cmp-label">SPH</span><span class="cmp-v">${fmtPower(pred.sphere)}</span><span class="cmp-v">${fmtPower(actual.sphere)}</span><span class="cmp-d">${deltaPill(s.sphereError, s.within025Sphere)}</span>
           <span class="cmp-sep"></span>
           <span class="cmp-label">CYL</span><span class="cmp-v">${fmtPower(pred.cylinder)}</span><span class="cmp-v">${fmtPower(actual.cylinder)}</span><span class="cmp-d">${deltaPill(s.cylinderError, s.within025Cylinder)}</span>
@@ -531,8 +531,8 @@
     const items = flags.length
       ? flags.map(f => `
           <li><span class="flag-dot ${f.level === "review" ? "review" : "info"}">${f.level === "review" ? "!" : "i"}</span>
-          <span class="flag-text"><strong>${esc(FLAG_TITLES[f.code] || f.code)}${f.eye ? ` Â· ${f.eye}` : ""}</strong><span>${esc(f.message)}</span></span></li>`).join("")
-      : `<li><span class="flag-dot ok">âœ“</span><span class="flag-text"><strong>No flags</strong><span>Readings consistent; nothing to review.</span></span></li>`;
+          <span class="flag-text"><strong>${esc(FLAG_TITLES[f.code] || f.code)}${f.eye ? ` · ${f.eye}` : ""}</strong><span>${esc(f.message)}</span></span></li>`).join("")
+      : `<li><span class="flag-dot ok">✓</span><span class="flag-text"><strong>No flags</strong><span>Readings consistent; nothing to review.</span></span></li>`;
     return `<h2 class="group-header">${esc(title)}</h2><div class="group"><ul class="flag-list">${items}</ul></div>`;
   }
 
@@ -557,7 +557,7 @@
     const rows = Object.entries(names).map(([key, label]) => {
       const lines = EYES.map(eye => {
         const c = v03p[eye.id].candidates[key];
-        const axis = c.cylinder === 0 ? "" : ` Ã— ${Math.round(c.axis)}`;
+        const axis = c.cylinder === 0 ? "" : ` × ${Math.round(c.axis)}`;
         return `<span>${eye.short}&nbsp; ${fmtPower(c.sphere)} ${fmtPower(c.cylinder)}${axis}</span>`;
       }).join("");
       const used = v03p.od.estimator === key ? `<span class="badge">Used</span>` : "";
@@ -575,14 +575,14 @@
     const shadowPred = run.shadow.prediction;
     const v03p = p.engine === "v0.3" ? p : shadowPred && shadowPred.engine === "v0.3" ? shadowPred : null;
 
-    let html = EYES.map(eye => eyeTable(eye, p[eye.id], a[eye.id], `${eye.name} Â· ${primaryName}`)).join("");
+    let html = EYES.map(eye => eyeTable(eye, p[eye.id], a[eye.id], `${eye.name} · ${primaryName}`)).join("");
     html += addGroup(p, a);
 
     if (p.engine === "v0.3") html += flagsGroup(p, "Flags");
 
     if (shadowPred) {
       const shadowName = engineLabel(run.shadow.id);
-      const inner = EYES.map(eye => eyeTable(eye, shadowPred[eye.id], a[eye.id], `${eye.name} Â· ${shadowName}`)).join("") +
+      const inner = EYES.map(eye => eyeTable(eye, shadowPred[eye.id], a[eye.id], `${eye.name} · ${shadowName}`)).join("") +
         (shadowPred.engine === "v0.3" ? flagsGroup(shadowPred, "Flags") + candidatesGroup(v03p) : "");
       html += `
         <details class="shadow-block">
@@ -618,10 +618,10 @@
     $("stats").innerHTML = [
       [cases.length, "Cases"],
       [pct(summary.clinicalMatchRate), "Eyes matched"],
-      [pct(summary.sphereWithin025Rate), "Sphere Â±0.25 D"],
-      [pct(summary.cylinderWithin025Rate), "Cylinder Â±0.25 D"],
+      [pct(summary.sphereWithin025Rate), "Sphere ±0.25 D"],
+      [pct(summary.cylinderWithin025Rate), "Cylinder ±0.25 D"],
       [pct(summary.axisWithinToleranceRate), "Axis in tolerance"],
-      [eyes ? pct(exact / eyes) : "â€”", "Exact eyes"]
+      [eyes ? pct(exact / eyes) : "—", "Exact eyes"]
     ].map(([value, label]) => `<div class="stat"><strong>${value}</strong><span>${label}</span></div>`).join("");
 
     renderEngineCompare(cases);
@@ -629,8 +629,8 @@
 
   function renderEngineCompare(cases) {
     const variants = [
-      [`Study Â· ${engineLabel(engines.primaryId())}`, c => c.prediction, true],
-      [`Shadow Â· ${engineLabel(engines.shadowId())}`, c => c.shadow && c.shadow.prediction],
+      [`Study · ${engineLabel(engines.primaryId())}`, c => c.prediction, true],
+      [`Shadow · ${engineLabel(engines.shadowId())}`, c => c.shadow && c.shadow.prediction],
       ["v0.3 selected", c => candidateSet(c, "selected")],
       ["v0.3 median", c => candidateSet(c, "median")],
       ["v0.3 most plus", c => candidateSet(c, "mostPlus")]
@@ -639,8 +639,8 @@
       const s = scoring.summarize(scoresFor(cases, pick));
       if (!s.eyes) return "";
       return `<tr class="${primary ? "primary-row" : ""}"><td>${label}</td><td class="col-eyes">${s.eyes}</td><td>${pct(s.clinicalMatchRate)}</td>
-        <td>${fmtDelta(s.meanSEBias)}</td><td>${s.meanAbsSEError == null ? "â€”" : s.meanAbsSEError.toFixed(2)}</td>
-        <td>${s.meanVectorError == null ? "â€”" : s.meanVectorError.toFixed(2)}</td></tr>`;
+        <td>${fmtDelta(s.meanSEBias)}</td><td>${s.meanAbsSEError == null ? "—" : s.meanAbsSEError.toFixed(2)}</td>
+        <td>${s.meanVectorError == null ? "—" : s.meanVectorError.toFixed(2)}</td></tr>`;
     }).join("");
     $("engineCompareDetail").textContent = cases.length ? `${cases.length} case${cases.length === 1 ? "" : "s"}` : "No cases yet";
     $("engineCompare").innerHTML = rows
@@ -835,7 +835,7 @@
   setCaseId(newCaseId());
 
   const shadowWord = engines.primaryId() === "v0.2" ? "v0.3 runs in shadow" : "v0.2 runs in shadow";
-  $("engineLine").textContent = `Study engine ${engineLabel(engines.primaryId())} Â· ${shadowWord}`;
+  $("engineLine").textContent = `Study engine ${engineLabel(engines.primaryId())} · ${shadowWord}`;
 
   setStage("measure");
   updateStats();

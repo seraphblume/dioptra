@@ -1,4 +1,4 @@
-// Project Dioptra â€” cylinder-aware scoring.
+// Project Dioptra — cylinder-aware scoring.
 //
 // Evaluation only: nothing here changes a prediction. The v0.2 comparison fields
 // (algorithm.js compareEye) are still produced unchanged for the study CSV; this module

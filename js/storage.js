@@ -103,5 +103,94 @@
     return [headers, ...rows].map(r => r.map(csvEscape).join(",")).join("\n");
   }
 
-  window.DioptraStorage = { listCases, saveCase, clearCases, toCSV };
+  // ------------------------------------------------------------------ shadow export
+  // Long format: one row per case x eye x engine variant, with cylinder-aware scoring.
+  // The study CSV above is unchanged; this file is for comparing engines after the cohort closes.
+
+  function v03Prediction(c) {
+    if (c.prediction && c.prediction.engine === "v0.3") return c.prediction;
+    if (c.shadow && c.shadow.prediction && c.shadow.prediction.engine === "v0.3") return c.shadow.prediction;
+    return null;
+  }
+
+  function engineId(prediction) {
+    if (!prediction) return "";
+    return prediction.engine || ("v" + String(prediction.version || "").split(".").slice(0, 2).join("."));
+  }
+
+  function variantsFor(c) {
+    const variants = [];
+    if (c.prediction) variants.push({ variant: engineId(c.prediction), prediction: c.prediction });
+    if (c.shadow && c.shadow.prediction) variants.push({ variant: engineId(c.shadow.prediction), prediction: c.shadow.prediction });
+    const v03 = v03Prediction(c);
+    if (v03) {
+      for (const name of ["selected", "median", "mostPlus"]) {
+        const od = v03.od.candidates && v03.od.candidates[name];
+        const os = v03.os.candidates && v03.os.candidates[name];
+        if (od && os) variants.push({ variant: `v0.3:${name}`, prediction: { od, os, tentativeAdd: v03.tentativeAdd } });
+      }
+    }
+    return variants;
+  }
+
+  function fixed(n, digits = 3) {
+    if (n === null || n === undefined || n === "") return "";
+    const x = Number(n);
+    return Number.isFinite(x) ? Number(x.toFixed(digits)) : "";
+  }
+
+  function toShadowCSV(cases) {
+    const scoring = window.DioptraScoring;
+    const headers = [
+      "case_id","saved_at","algorithm_version","cohort_engine","variant","eye","age",
+      "vertex_mm","near_wd_cm","near_point_cm",
+      "ar_sel_sph","ar_sel_cyl","ar_sel_axis","ar_sel_m",
+      "ar_centre_m","ar_centre_j0","ar_centre_j45","n_readings","m_range","j_spread","selected_distance","reliability",
+      "refractive_state","age_band","offset",
+      "pred_sph","pred_cyl","pred_axis","pred_m","pred_add",
+      "final_sph","final_cyl","final_axis","final_m","final_add",
+      "sph_error","cyl_error","axis_error","axis_tolerance","axis_within_tolerance",
+      "se_error","j0_error","j45_error","vector_error","astigmatic_error","clinical_match",
+      "keratometry_disagreement","ametropia","astigmatism","flags","status"
+    ];
+
+    const rows = [];
+    for (const c of cases) {
+      if (!c.actual || !c.prediction) continue;
+      const v03 = v03Prediction(c);
+      const obs = (c.shadow && c.shadow.observations) || {};
+      for (const { variant, prediction } of variantsFor(c)) {
+        for (const eye of ["od", "os"]) {
+          const pred = prediction[eye];
+          const actual = c.actual[eye];
+          if (!pred || !actual) continue;
+          const s = scoring.scoreEye(pred, actual);
+          const ev = v03 ? v03[eye] : null;
+          const input = c.input[eye] || {};
+          rows.push([
+            c.caseId, c.savedAt, c.prediction.version, engineId(c.prediction), variant, eye, c.input.age,
+            obs.instrument ? obs.instrument.vertexMm : "", obs.near ? obs.near.workingDistanceCm : "", obs.near ? obs.near.nearPointCm : "",
+            input.sphere, input.cylinder, input.axis, fixed(se(input.sphere, input.cylinder)),
+            ev ? fixed(ev.evidence.centre.M) : "", ev ? fixed(ev.evidence.centre.J0) : "", ev ? fixed(ev.evidence.centre.J45) : "",
+            ev ? ev.evidence.readings : "", ev ? fixed(ev.evidence.mRange) : "", ev ? fixed(ev.evidence.jSpread) : "",
+            ev ? fixed(ev.evidence.selectedDistance) : "", ev ? ev.evidence.reliability.join(" ") : "",
+            ev ? ev.stratum.refractiveState : "", ev ? ev.stratum.ageBand : "", ev ? ev.stratum.offset : "",
+            pred.sphere, pred.cylinder, pred.axis, fixed(se(pred.sphere, pred.cylinder)), prediction.tentativeAdd,
+            actual.sphere, actual.cylinder, actual.axis, fixed(se(actual.sphere, actual.cylinder)), c.actual.add,
+            fixed(s.sphereError), fixed(s.cylinderError), s.axisError == null ? "" : fixed(s.axisError, 1),
+            s.axisTolerance == null ? "" : s.axisTolerance, s.axisWithinTolerance == null ? "" : s.axisWithinTolerance,
+            fixed(s.seError), fixed(s.vectorError.J0), fixed(s.vectorError.J45), fixed(s.vectorErrorMagnitude), fixed(s.astigmaticError),
+            s.clinicalMatch,
+            ev && ev.keratometry ? fixed(ev.keratometry.disagreement) : "",
+            ev ? ev.ametropia : "", ev ? ev.astigmatism : "",
+            ev ? ev.flags.map(f => f.code).join(" ") : "",
+            v03 ? v03.status : ""
+          ]);
+        }
+      }
+    }
+    return [headers, ...rows].map(r => r.map(csvEscape).join(",")).join("\n");
+  }
+
+  window.DioptraStorage = { listCases, saveCase, clearCases, toCSV, toShadowCSV };
 })();

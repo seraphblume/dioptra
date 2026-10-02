@@ -1,27 +1,34 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>Dioptra v0.2 tests</title></head>
-<body><div id="out"></div>
-<script src="../js/config.js"></script><script src="../js/algorithm.js"></script>
-<script>
+Dioptra browser testsPASS — v0.2 versionPASS — v0.2 axis 178→180PASS — v0.2 axis circular 180↔5=5PASS — v0.2 frozen rulePASS — v0.2 SE budgetPASS — v0.3 shadow mode by defaultPASS — v0.3 keeps 1° axis above 0.75 DPASS — ANSI axis tolerance
+
+
+
+
 const out=document.getElementById("out");
-function test(name,fn){try{fn();out.innerHTML+=`<p>PASS — ${name}</p>`}catch(e){out.innerHTML+=`<p>FAIL — ${name}: ${e.message}</p>`}}
+function test(name,fn){try{fn();out.innerHTML+=`<p>PASS — ${name}</p>`}catch(e){out.innerHTML+=`<p class="fail">FAIL — ${name}: ${e.message}</p>`}}
 function eq(a,b){if(a!==b)throw new Error(`${a} !== ${b}`)}
 function near(a,b,t=1e-9){if(Math.abs(a-b)>t)throw new Error(`${a} !~= ${b}`)}
-test("version",()=>eq(DIOPTRA_CONFIG.version,"0.2.0"));
-test("axis 178→180",()=>eq(DioptraAlgorithm.quantizeAxis(178),180));
-test("axis circular 180↔5=5",()=>eq(DioptraAlgorithm.axisDistance(180,5),5));
-test("candidate rule",()=>{
- const p=DioptraAlgorithm.predictCase({age:25,
+const sample={age:25,
   od:{sphere:-2.50,cylinder:-1.25,axis:178,va:"20/100",pinhole:"20/50"},
-  os:{sphere:-2.75,cylinder:-1.00,axis:168,va:"20/100",pinhole:"20/50"}});
+  os:{sphere:-2.75,cylinder:-1.00,axis:168,va:"20/100",pinhole:"20/50"}};
+test("v0.2 version",()=>eq(DIOPTRA_CONFIG.version,"0.2.0"));
+test("v0.2 axis 178→180",()=>eq(DioptraAlgorithm.quantizeAxis(178),180));
+test("v0.2 axis circular 180↔5=5",()=>eq(DioptraAlgorithm.axisDistance(180,5),5));
+test("v0.2 frozen rule",()=>{
+ const p=DioptraAlgorithm.predictCase(sample);
  eq(p.od.sphere,-2.75); eq(p.od.cylinder,-1.25); eq(p.od.axis,180);
  eq(p.os.sphere,-3.00); eq(p.os.cylinder,-1.00); eq(p.os.axis,170);
  near(p.od.seShiftFromAR,-0.25); near(p.os.seShiftFromAR,-0.25);
 });
-test("SE budget",()=>{
+test("v0.2 SE budget",()=>{
  const p=DioptraAlgorithm.predictCase({age:25,
   od:{sphere:0.37,cylinder:-0.37,axis:90,va:"20/20",pinhole:"20/20"},
   os:{sphere:0.37,cylinder:-0.37,axis:90,va:"20/20",pinhole:"20/20"}});
  if(Math.abs(p.od.seShiftFromAR)>0.2500001)throw new Error(p.od.seShiftFromAR);
 });
-</script></body></html>
+test("v0.3 shadow mode by default",()=>{eq(DioptraEngines.primaryId(),"v0.2");eq(DioptraEngines.shadowId(),"v0.3")});
+test("v0.3 keeps 1° axis above 0.75 D",()=>{
+ const p=DioptraEngineV03.predictCase(sample);
+ eq(p.od.sphere,-2.75); eq(p.od.axis,178); eq(p.os.axis,168);
+});
+test("ANSI axis tolerance",()=>{eq(DioptraScoring.axisTolerance(1.25),3);eq(DioptraScoring.axisTolerance(2),2)});
+

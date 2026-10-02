@@ -1,4 +1,4 @@
-// Project Dioptra â€” engine registry.
+// Project Dioptra — engine registry.
 //
 // Decides which engine produces the locked study prediction ("primary") and which runs
 // alongside it ("shadow"). While DIOPTRA_V03_CONFIG.mode is "shadow", the frozen v0.2

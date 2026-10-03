@@ -56,6 +56,12 @@ The comparison screen and the engine-comparison export use:
 
 The original v0.2 comparison fields (`exact`, `within5Axis` …) are still produced unchanged for the study CSV.
 
+## Autorefractor ticket scanning
+
+The Measure screen can populate the AR tables from a photographed or selected autorefractor ticket. Recognition runs in the browser using Tesseract.js; the OCR library/language assets are fetched from a CDN on first use, but Dioptra's code does not upload or persist the ticket image. The imported values are always editable and must be reviewed before the prediction is locked.
+
+The parser is intentionally format-conservative: it looks for the ticket's OD/R and OS/L sections, up to three repeated S/C/A readings plus the selected/bracketed line, reliability digits, VD, WD, distance PD and near PD. Patient name and other identifying text are ignored. Manual entry remains the fallback and source of truth when OCR is uncertain.
+
 ## Data and exports
 
 Cases are stored in the browser's local storage on the device. Nothing is sent anywhere.
@@ -82,7 +88,7 @@ node tests/export-and-fit.test.js   # exports and offset fitting, on synthetic d
 | `js/engines.js` | Chooses the study engine and the shadow engine |
 | `js/scoring.js` | Cylinder-aware scoring |
 | `js/storage.js` | Local storage and CSV exports |
-| `js/app.js`, `index.html`, `css/app.css` | Interface |
+| `js/app.js`, `js/ticket-scan.js`, `index.html`, `css/app.css` | Interface and local ticket scanning |
 | `tools/fit-offsets.js` | Stratified offset fitting |
 
 ## Documentation

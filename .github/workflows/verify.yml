@@ -29,6 +29,9 @@ jobs:
       - name: Verify v0.3 engine and scoring
         run: node tests/v0.3-engine.test.js
 
+      - name: Verify autorefractor ticket parser
+        run: node tests/ticket-scan.test.js
+
       - name: Verify exports and offset fitting
         run: node tests/export-and-fit.test.js
 

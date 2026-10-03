@@ -6,6 +6,7 @@
   const engines = window.DioptraEngines;
   const scoring = window.DioptraScoring;
   const store = window.DioptraStorage;
+  const ticketScan = window.DioptraTicketScan;
 
   const EYES = [
     { id: "od", short: "OD", name: "Right eye" },
@@ -194,6 +195,97 @@
     const n = parsed(id);
     if (n == null || Number.isNaN(n)) return n;
     return Math.abs(n) === 0 ? 0 : -Math.abs(n);
+  }
+
+  function setSignedField(id, value) {
+    const el = $(id);
+    if (!el || value == null || !Number.isFinite(Number(value))) return;
+    const n = Number(value);
+    const sign = n > 0 ? 1 : -1;
+    el.value = Math.abs(n).toFixed(2);
+    el.dataset.sign = String(sign);
+    const button = document.querySelector(`.sign[data-target="${id}"]`);
+    if (button) button.textContent = sign > 0 ? "+" : MINUS;
+  }
+
+  function setCylinderField(id, value) {
+    const el = $(id);
+    if (!el || value == null || !Number.isFinite(Number(value))) return;
+    el.value = Math.abs(Number(value)).toFixed(2);
+  }
+
+  function setPlainField(id, value, digits = null) {
+    const el = $(id);
+    if (!el || value == null || !Number.isFinite(Number(value))) return;
+    el.value = digits == null ? String(value) : Number(value).toFixed(digits);
+  }
+
+  function applyScannedEye(eye, parsedEye) {
+    if (!parsedEye) return;
+    (parsedEye.readings || []).slice(0, 3).forEach((reading, i) => {
+      const p = `${eye}R${i + 1}`;
+      setSignedField(`${p}Sph`, reading.sphere);
+      setCylinderField(`${p}Cyl`, reading.cylinder);
+      setPlainField(`${p}Ax`, reading.axis);
+      if (reading.reliability != null) setPlainField(`${p}Q`, reading.reliability);
+    });
+    if (parsedEye.selected) {
+      const p = `${eye}Sel`;
+      setSignedField(`${p}Sph`, parsedEye.selected.sphere);
+      setCylinderField(`${p}Cyl`, parsedEye.selected.cylinder);
+      setPlainField(`${p}Ax`, parsedEye.selected.axis);
+    }
+  }
+
+  function applyTicketScan(result) {
+    applyScannedEye("od", result.od);
+    applyScannedEye("os", result.os);
+    if (result.instrument) {
+      setPlainField("vertexMm", result.instrument.vertexMm, 2);
+      setPlainField("pdDistance", result.instrument.pdDistanceMm);
+      setPlainField("pdNear", result.instrument.pdNearMm);
+    }
+    if (result.near) setPlainField("nearWd", result.near.workingDistanceCm);
+    document.querySelectorAll(".invalid").forEach(el => el.classList.remove("invalid"));
+  }
+
+  function scanProgressText(message) {
+    if (!message || !message.status) return "Reading ticket…";
+    if (message.status === "recognizing text" && Number.isFinite(message.progress)) {
+      return `Reading ticket… ${Math.round(message.progress * 100)}%`;
+    }
+    if (/loading/i.test(message.status)) return "Loading scanner…";
+    return "Reading ticket…";
+  }
+
+  async function scanTicketFile(file) {
+    if (!ticketScan || !ticketScan.scanImage) {
+      toast("Ticket scanner is unavailable. Manual entry still works.", true);
+      return;
+    }
+    const btn = $("scanTicketBtn");
+    const row = $("scanStatusRow");
+    const status = $("scanStatus");
+    btn.disabled = true;
+    row.hidden = false;
+    status.textContent = "Loading scanner…";
+    try {
+      const result = await ticketScan.scanImage(file, message => {
+        status.textContent = scanProgressText(message);
+      });
+      applyTicketScan(result);
+      const warningCount = result.warnings ? result.warnings.length : 0;
+      status.textContent = warningCount
+        ? `Imported with ${warningCount} item${warningCount === 1 ? "" : "s"} to review`
+        : "Imported · review values before locking";
+      toast(warningCount ? "Ticket imported. Review highlighted/missing values." : "Ticket imported. Review values before locking.");
+    } catch (err) {
+      status.textContent = "Scan failed · use manual entry or try another photo";
+      toast(err && err.message ? err.message : "Could not scan this ticket.", true);
+    } finally {
+      btn.disabled = false;
+      $("ticketImageInput").value = "";
+    }
   }
 
   function markInvalid(ids, errors, id, message) {
@@ -467,6 +559,9 @@
     setSegment($("previousRxKnown"), "");
     $("comparisonContent").innerHTML = "";
     $("kSection").open = false;
+    $("scanStatusRow").hidden = true;
+    $("scanStatus").textContent = "Ready";
+    $("ticketImageInput").value = "";
     setCaseId(newCaseId());
     setStage("measure");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -816,6 +911,12 @@
     const onScroll = () => navbar.classList.toggle("scrolled", window.scrollY > 36);
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
+
+    $("scanTicketBtn").addEventListener("click", () => $("ticketImageInput").click());
+    $("ticketImageInput").addEventListener("change", e => {
+      const file = e.target.files && e.target.files[0];
+      if (file) scanTicketFile(file);
+    });
 
     $("primaryAction").addEventListener("click", primaryAction);
     $("newCaseBtn").addEventListener("click", newCase);

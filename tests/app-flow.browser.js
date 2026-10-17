@@ -106,7 +106,7 @@ const server = http.createServer(async (req, res) => {
     }
     await page.locator("#primaryAction").click();
     assert.equal(await page.locator("body").getAttribute("data-stage"), "compare");
-    assert.match(await page.locator("#comparisonContent").innerText(), /Right eye · v0.3.0/);
+    assert.match(await page.locator("#comparisonContent").innerText(), /Right eye · v0\.3\.0/i);
     await page.locator("#primaryAction").click();
     const saved = await page.evaluate(() => DioptraStorage.listCases());
     assert.equal(saved.length, 2);

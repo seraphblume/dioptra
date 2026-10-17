@@ -137,7 +137,7 @@ const server = http.createServer(async (req, res) => {
 
     // Stub OCR only; exercise the production parser and all import-to-form mappings.
     await page.evaluate(() => {
-      DioptraTicketScan.scanImage = async () => DioptraTicketScan.parseText("<R>\n-2.37 -1.12 178 9\n<-2.37 -1.12 178>\n<L>\n+1.37 -0.62 168 9\n<+1.37 -0.62 168>\nVD=12.0\nWD=40cm\nPD=62");
+      DioptraTicketScan.scanImage = async () => DioptraTicketScan.parseTicketText("<R>\n-2.37 -1.12 178 9\n<-2.37 -1.12 178>\n<L>\n+1.37 -0.62 168 9\n<+1.37 -0.62 168>\nVD=12.0\nWD=40cm\nPD=62");
     });
     await page.locator("#ticketImageInput").setInputFiles({ name: "synthetic.png", mimeType: "image/png", buffer: Buffer.from("stubbed OCR") });
     await page.locator("#scanStatus").filter({ hasText: /Imported/ }).waitFor();

@@ -1,6 +1,6 @@
 # Proposed v0.3 data collection
 
-Status: **partly collected.** The study record and the Cohort B study CSV are unchanged. The interface now also collects the autorefractor repeat readings, reliability digits, vertex distance, PD, near working distance, near point and keratometry. These are stored under `shadow.observations` with `shadowOnly: true`, and only the v0.3 shadow engine uses them. The remaining fields below are still design only.
+Status: **partly collected, active candidate since 2026-10-16.** New records use `dioptra-case-2` and cohort `v0.3-candidate-1`. Repeat readings, reliability, vertex distance, PD, near distances and keratometry are stored in top-level `observations` and feed the v0.3 candidate. Historical `shadow.observations` records remain readable. Near distances are entered in mm and stored in the existing explicitly named cm fields; the comparison export includes both units. Previous Rx Yes now requires per-eye S/C/A and offers optional ADD, saved under `input.previousRx`. The study CSV columns stay unchanged; the comparison CSV appends the new fields. Remaining fields below are still design only; the proposed schema is not the `dioptra-case-2` runtime format.
 
 Machine-readable draft: [`data-collection-v0.3.schema.json`](data-collection-v0.3.schema.json)
 
@@ -75,4 +75,4 @@ These codes explain the label. They must not become shortcuts that leak the fina
 
 ## Transition from Cohort B
 
-During Cohort B, continue saving the existing v0.2 record unchanged. If richer observations are collected separately, mark them `shadowOnly: true`; do not feed them to the frozen predictor. Start v0.3 development only after the Cohort B lock is closed and exported, with a documented split between model development and prospective validation.
+Historical Cohort B records remain unchanged. The owner-authorized candidate transition is documented in the freeze contract. New cases have a separate cohort and schema; promotion retains the prior offsets and does not represent fitting or validation on closed data. Future tuning must use a closed development cohort and be followed by a new prospective cohort.

@@ -22,7 +22,8 @@ let seed = 7;
 const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
 const q = x => Math.round(x * 4) / 4;
 
-function buildCases(version) {
+function buildCases(mode) {
+  w.DIOPTRA_V03_CONFIG.mode = mode;
   const cases = [];
   for (let i = 0; i < 60; i++) {
     const age = 18 + Math.floor(rnd() * 55);
@@ -43,7 +44,7 @@ function buildCases(version) {
     });
     const final = e => ({ sphere: q(e.sphere + clinician(e)), cylinder: e.cylinder, axis: Math.round(e.axis / 5) * 5 || 180 });
     const actual = { od: final(od), os: final(os), add: null, note: "" };
-    const prediction = { ...run.primary.prediction, version };
+    const prediction = run.primary.prediction;
     cases.push({
       caseId: `S${i}`,
       savedAt: "2026-01-01T00:00:00.000Z",
@@ -61,7 +62,7 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "dioptra-"));
 
 // Study CSV columns are unchanged from the v0.2 Cohort B export.
 const STUDY_HEADER = "case_id,age,created_at,algorithm_version,ar_od_sph,ar_od_cyl,ar_od_axis,va_od,ph_od,ar_os_sph,ar_os_cyl,ar_os_axis,va_os,ph_os,pred_od_sph,pred_od_cyl,pred_od_axis,pred_os_sph,pred_os_cyl,pred_os_axis,pred_add,final_od_sph,final_od_cyl,final_od_axis,final_os_sph,final_os_cyl,final_os_axis,final_add,od_sph_error,od_cyl_error,od_axis_error,os_sph_error,os_cyl_error,os_axis_error,ar_od_se,pred_od_se,final_od_se,pred_od_se_shift,od_se_error,od_se_guardrail_status,od_se_guardrail_applied,ar_os_se,pred_os_se,final_os_se,pred_os_se_shift,os_se_error,os_se_guardrail_status,os_se_guardrail_applied,od_exact,os_exact,od_within_025_sph,od_within_025_cyl,od_within_5_axis,od_within_025_se,os_within_025_sph,os_within_025_cyl,os_within_5_axis,os_within_025_se,symptoms_text,symptom_tearing,symptom_blurred_vision,symptom_burning_irritation,symptom_itching,symptom_discharge,symptom_infection,symptom_headache,symptom_flashes,symptom_dry_eye,symptom_other,symptom_other_text,diabetes,hypertension,pregnancy,previous_rx_known,final_note";
-const cases = buildCases("0.1.0");
+const cases = buildCases("active");
 assert.equal(w.DioptraStorage.toCSV(cases).split("\n")[0], STUDY_HEADER);
 
 // Shadow CSV: case x eye x variant.
@@ -84,7 +85,7 @@ assert.ok(cv.stratified < cv.global, "stratified beats global in cross-validatio
 
 // Guard: refuses to fit while Cohort B (v0.2) data is open.
 const openFile = path.join(tmp, "open.csv");
-fs.writeFileSync(openFile, w.DioptraStorage.toShadowCSV(buildCases("0.2.0")));
+fs.writeFileSync(openFile, w.DioptraStorage.toShadowCSV(buildCases("shadow")));
 const guarded = spawnSync(process.execPath, [path.join(root, "tools/fit-offsets.js"), openFile], { encoding: "utf8" });
 assert.equal(guarded.status, 2);
 const closed = spawnSync(process.execPath, [path.join(root, "tools/fit-offsets.js"), openFile, "--cohort-closed"], { encoding: "utf8" });

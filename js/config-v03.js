@@ -1,21 +1,17 @@
 // Project Dioptra — v0.3 engine configuration.
 //
-// The v0.3 engine runs in SHADOW mode while Cohort B is open: it is computed and stored
-// with every case, but the locked study prediction still comes from the frozen v0.2 path
-// (js/config.js + js/algorithm.js, which this release does not modify).
-//
-// To promote v0.3 after Cohort B is closed and exported:
-//   1. fit the stratified offsets with `node tools/fit-offsets.js <export.csv> --cohort-closed`,
-//   2. paste the result into `sphereOffsets` / `offsetsProvenance` below,
-//   3. set `mode: "active"` and `ui.finalAxisStep: 1`,
-//   4. start a new cohort.
+// Promoted to the active candidate on 2026-10-16 at the user's request.
+// New cases belong to a distinct candidate cohort; historical Cohort B records and
+// the frozen v0.2 implementation remain intact. Offsets are still the original priors,
+// not fitted values. Future calibration requires closed-cohort data and a new version.
 //
 // Every threshold marked PROVISIONAL is an uncalibrated starting value. It produces a
 // review flag only; it never changes a dioptric value.
 
 window.DIOPTRA_V03_CONFIG = {
   version: "0.3.0",
-  mode: "shadow", // "shadow" | "active"
+  mode: "active", // "shadow" | "active"
+  cohort: "v0.3-candidate-1",
 
   powerStep: 0.25,
 
@@ -91,6 +87,6 @@ window.DIOPTRA_V03_CONFIG = {
   },
 
   ui: {
-    finalAxisStep: 5 // keep 5° entry while Cohort B is open; set to 1 when v0.3 becomes active
+    finalAxisStep: 1
   }
 };

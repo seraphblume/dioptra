@@ -36,15 +36,17 @@ const cfg = w.DIOPTRA_V03_CONFIG;
 
 const eye = (sphere, cylinder, axis, extra = {}) => ({ sphere, cylinder, axis, va: "", pinhole: "", ...extra });
 
-test("default configuration is shadow mode with v0.2-equivalent offsets", () => {
-  assert.equal(cfg.mode, "shadow");
+test("default configuration is the active v0.3 candidate with unchanged prior offsets", () => {
+  assert.equal(cfg.mode, "active");
+  assert.equal(cfg.cohort, "v0.3-candidate-1");
+  assert.equal(cfg.ui.finalAxisStep, 1);
   assert.equal(cfg.version, "0.3.0");
   for (const bands of Object.values(cfg.sphereOffsets)) {
     for (const v of Object.values(bands)) near(v, -0.25, EPS, "prior offset");
   }
   assert.equal(cfg.lowCylinder.dropAtOrBelow, null);
-  assert.equal(w.DioptraEngines.primaryId(), "v0.2");
-  assert.equal(w.DioptraEngines.shadowId(), "v0.3");
+  assert.equal(w.DioptraEngines.primaryId(), "v0.3");
+  assert.equal(w.DioptraEngines.shadowId(), "v0.2");
 });
 
 test("power vectors round-trip", () => {
@@ -267,17 +269,26 @@ test("ANSI-style axis tolerance and cylinder-aware scoring", () => {
   near(sum.axisWithinToleranceRate, 0.5, EPS, "axis rate");
 });
 
-test("engine registry keeps v0.2 primary and records shadow failures", () => {
+test("engine registry promotes v0.3 and can still reproduce the historical shadow mode", () => {
   const run = w.DioptraEngines.run({ age: 30, od: eye(-1, -0.5, 90), os: eye(-1, -0.5, 90) });
-  assert.equal(run.primary.id, "v0.2");
-  assert.equal(run.primary.prediction.version, "0.2.0");
-  assert.equal(run.shadow.id, "v0.3");
-  assert.equal(run.shadow.prediction.engine, "v0.3");
+  assert.equal(run.primary.id, "v0.3");
+  assert.equal(run.primary.prediction.version, "0.3.0");
+  assert.equal(run.shadow.id, "v0.2");
+  assert.equal(run.shadow.prediction.version, "0.2.0");
 
-  const active = load(c => { c.mode = "active"; });
-  const run2 = active.DioptraEngines.run({ age: 30, od: eye(-1, -0.5, 90), os: eye(-1, -0.5, 90) });
-  assert.equal(run2.primary.id, "v0.3");
-  assert.equal(run2.shadow.id, "v0.2");
+  const historical = load(c => { c.mode = "shadow"; });
+  const run2 = historical.DioptraEngines.run({ age: 30, od: eye(-1, -0.5, 90), os: eye(-1, -0.5, 90) });
+  assert.equal(run2.primary.id, "v0.2");
+  assert.equal(run2.shadow.id, "v0.3");
+});
+
+test("a v0.2 shadow failure never substitutes for or blocks the active candidate", () => {
+  const isolated = load();
+  isolated.DioptraAlgorithm.predictCase = () => { throw new Error("Synthetic shadow failure"); };
+  const run = isolated.DioptraEngines.run({ age: 30, od: eye(-1, -1, 178), os: eye(-1, -1, 168) });
+  assert.equal(run.primary.prediction.od.axis, 178);
+  assert.equal(run.shadow.prediction, null);
+  assert.equal(run.shadow.error, "Synthetic shadow failure");
 });
 
 test("v0.2 predictions are identical with and without the extra v0.3 inputs", () => {

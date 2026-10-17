@@ -50,7 +50,7 @@
   const state = {
     stage: "measure",
     input: null,        // v0.2-shaped input (unchanged study record)
-    observations: null, // extra shadow-only observations
+    observations: null, // evidence for the active candidate and comparison engine
     run: null,          // { primary, shadow }
     actual: null,
     comparison: null
@@ -86,11 +86,20 @@
 
   // ------------------------------------------------------------------ builders
 
-  function powerField(id, signed, placeholder) {
+  function powerField(id, signed) {
+    const label = `${id.startsWith("od") ? "OD" : "OS"} ${id.includes("Prev") ? "previous" : id.includes("Fin") ? "final" : id.includes("Sel") ? "selected" : "reading " + id.match(/R(\d)/)[1]} ${signed ? "sphere" : "cylinder"}`;
     const sign = signed
-      ? `<button type="button" class="sign" data-target="${id}" aria-label="Toggle sign">${MINUS}</button>`
+      ? `<button type="button" class="sign" data-target="${id}" aria-label="Toggle ${label} sign">${MINUS}</button>`
       : `<span class="sign static" aria-hidden="true">${MINUS}</span>`;
-    return `<div class="power">${sign}<input id="${id}" class="field" type="text" inputmode="decimal" autocomplete="off" placeholder="${placeholder}" data-sign="-1" /></div>`;
+    const options = Array.from({ length: (signed ? 30 : 10) * 4 + 1 }, (_, i) => (i / 4).toFixed(2))
+      .map(v => `<option value="${v}">${v}</option>`).join("");
+    return `<div class="power">${sign}<select id="${id}" class="field" aria-label="${label}" data-sign="-1"><option value="">—</option>${options}</select></div>`;
+  }
+
+  function axisField(id, label, step = 1) {
+    const options = Array.from({ length: Math.floor(180 / step) }, (_, i) => (i + 1) * step)
+      .map(v => `<option value="${v}">${v}°</option>`).join("");
+    return `<select id="${id}" class="field" aria-label="${label}"><option value="">—</option>${options}</select>`;
   }
 
   function buildArTables() {
@@ -98,14 +107,14 @@
       const rows = AR_ROWS.map(row => {
         const p = `${eye.id}${row.id}`;
         const q = row.repeat
-          ? `<input id="${p}Q" class="field" type="text" inputmode="numeric" autocomplete="off" maxlength="2" placeholder="Q" aria-label="Reliability" />`
+          ? `<select id="${p}Q" class="field" aria-label="${eye.short} reading ${row.label} reliability"><option value="">—</option>${Array.from({ length: 10 }, (_, i) => `<option value="${i}">${i}</option>`).join("")}</select>`
           : `<span></span>`;
         return `
           <div class="rx-row${row.repeat ? "" : " selected"}" data-eye="${eye.id}" data-row="${row.id}">
             <span class="rx-row-label" title="${row.repeat ? "Reading " + row.label : "Selected line (required)"}">${row.label}</span>
-            ${powerField(p + "Sph", true, "0.00")}
-            ${powerField(p + "Cyl", false, "0.00")}
-            <input id="${p}Ax" class="field" type="text" inputmode="numeric" autocomplete="off" placeholder="180" aria-label="Axis" />
+            ${powerField(p + "Sph", true)}
+            ${powerField(p + "Cyl", false)}
+            ${axisField(p + "Ax", `${eye.short} ${row.repeat ? "reading " + row.label : "selected"} axis`)}
             ${q}
           </div>`;
       }).join("");
@@ -116,19 +125,18 @@
 
   function buildFinalTables() {
     const step = (v03.ui && v03.ui.finalAxisStep) || 5;
-    const axisOptions = ['<option value="">—</option>']
-      .concat(Array.from({ length: Math.floor(180 / step) }, (_, i) => (i + 1) * step).map(v => `<option value="${v}">${v}°</option>`))
-      .join("");
-    for (const eye of EYES) {
-      const p = `${eye.id}Fin`;
-      $(`final-${eye.id}`).innerHTML = `
+    for (const [kind, suffix] of [["final", "Fin"], ["previous", "Prev"]]) {
+      for (const eye of EYES) {
+        const p = `${eye.id}${suffix}`;
+        $(`${kind}-${eye.id}`).innerHTML = `
         <div class="rx-head"><span></span><span>SPH</span><span>CYL</span><span>AXIS</span></div>
         <div class="rx-row" data-eye="${eye.id}">
           <span class="rx-row-label">${eye.short}</span>
-          ${powerField(p + "Sph", true, "0.00")}
-          ${powerField(p + "Cyl", false, "0.00")}
-          <select id="${p}Ax" class="field" aria-label="Axis">${axisOptions}</select>
+          ${powerField(p + "Sph", true)}
+          ${powerField(p + "Cyl", false)}
+          ${axisField(p + "Ax", `${eye.short} ${kind} axis`, kind === "final" ? step : 1)}
         </div>`;
+      }
     }
   }
 
@@ -161,10 +169,11 @@
   }
 
   function populateSelects() {
-    const va = '<option value="">—</option>' + cfg.visualAcuity.map(v => `<option value="${v.snellen}">${v.snellen}</option>`).join("");
+    const va = '<option value="">—</option>' + cfg.visualAcuity.map(v => `<option value="${v.snellen}">${v.decimal.toFixed(2)} = ${v.snellen}</option>`).join("");
     ["vaOd", "phOd", "vaOs", "phOs"].forEach(id => { $(id).innerHTML = va; });
-    $("finalAdd").innerHTML = '<option value="">None</option>' +
+    const add = '<option value="">None</option>' +
       Array.from({ length: 14 }, (_, i) => ((i + 1) * 0.25).toFixed(2)).map(v => `<option value="${v}">+${v}</option>`).join("");
+    ["finalAdd", "previousAdd"].forEach(id => { $(id).innerHTML = add; });
   }
 
   // ------------------------------------------------------------------ reading values
@@ -202,7 +211,7 @@
     if (!el || value == null || !Number.isFinite(Number(value))) return;
     const n = Number(value);
     const sign = n > 0 ? 1 : -1;
-    el.value = Math.abs(n).toFixed(2);
+    setFieldValue(el, Math.abs(n).toFixed(2));
     el.dataset.sign = String(sign);
     const button = document.querySelector(`.sign[data-target="${id}"]`);
     if (button) button.textContent = sign > 0 ? "+" : MINUS;
@@ -211,13 +220,21 @@
   function setCylinderField(id, value) {
     const el = $(id);
     if (!el || value == null || !Number.isFinite(Number(value))) return;
-    el.value = Math.abs(Number(value)).toFixed(2);
+    setFieldValue(el, Math.abs(Number(value)).toFixed(2));
+  }
+
+  // Preserve exact scanned values even when the ticket uses finer than 0.25 D steps.
+  function setFieldValue(el, value) {
+    if (el.tagName === "SELECT" && ![...el.options].some(o => o.value === value)) {
+      el.add(new Option(value, value));
+    }
+    el.value = value;
   }
 
   function setPlainField(id, value, digits = null) {
     const el = $(id);
     if (!el || value == null || !Number.isFinite(Number(value))) return;
-    el.value = digits == null ? String(value) : Number(value).toFixed(digits);
+    setFieldValue(el, digits == null ? String(value) : Number(value).toFixed(digits));
   }
 
   function applyScannedEye(eye, parsedEye) {
@@ -245,7 +262,7 @@
       setPlainField("pdDistance", result.instrument.pdDistanceMm);
       setPlainField("pdNear", result.instrument.pdNearMm);
     }
-    if (result.near) setPlainField("nearWd", result.near.workingDistanceCm);
+    if (result.near && result.near.workingDistanceCm != null) setPlainField("nearWd", result.near.workingDistanceCm * 10);
     document.querySelectorAll(".invalid").forEach(el => el.classList.remove("invalid"));
   }
 
@@ -389,9 +406,30 @@
       pdNearMm: optional("pdNear", 35, 85, "Near PD")
     };
     const near = {
-      workingDistanceCm: optional("nearWd", 15, 100, "Near working distance"),
-      nearPointCm: optional("nearPoint", 5, 200, "Near point")
+      // UI is mm; the existing engine and historical observation schema use cm.
+      workingDistanceCm: null,
+      nearPointCm: null
     };
+    const wdMm = optional("nearWd", 150, 1000, "Near working distance (150–1000 mm)");
+    const npMm = optional("nearPoint", 50, 2000, "Near point (50–2000 mm)");
+    if (wdMm != null) near.workingDistanceCm = wdMm / 10;
+    if (npMm != null) near.nearPointCm = npMm / 10;
+
+    let previousRx = null;
+    if ($("previousRxKnown").dataset.value === "yes") {
+      previousRx = {};
+      for (const eye of EYES) {
+        const p = `${eye.id}Prev`;
+        const r = { sphere: signedValue(`${p}Sph`), cylinder: minusValue(`${p}Cyl`) ?? 0, axis: parsed(`${p}Ax`) };
+        if (r.cylinder === 0 && r.axis == null) r.axis = 180;
+        if (!validRx(r)) {
+          [`${p}Sph`, `${p}Cyl`, `${p}Ax`].forEach(id => invalid.add(id));
+          errors.push(`Enter the previous prescription for ${eye.short}.`);
+        }
+        previousRx[eye.id] = r;
+      }
+      previousRx.add = parsed("previousAdd");
+    }
 
     const symptomData = readSymptoms();
     const input = {
@@ -401,6 +439,7 @@
       symptoms: symptomData.symptoms,
       medical: readMedical(),
       previousRxKnown: $("previousRxKnown").dataset.value,
+      previousRx,
       od: eyes.od,
       os: eyes.os
     };
@@ -517,18 +556,20 @@
   function save() {
     const run = state.run;
     const record = {
+      schema: "dioptra-case-2",
+      cohort: v03.cohort,
       caseId: state.input.caseId,
       savedAt: new Date().toISOString(),
       input: state.input,
       prediction: run.primary.prediction,
       actual: state.actual,
       comparison: state.comparison,
+      observations: state.observations,
       shadow: {
         shadowOnly: true,
         schema: "dioptra-shadow-1",
         primaryEngine: run.primary.id,
         shadowEngine: run.shadow.id,
-        observations: state.observations,
         prediction: run.shadow.prediction,
         error: run.shadow.error
       }
@@ -673,7 +714,7 @@
     let html = EYES.map(eye => eyeTable(eye, p[eye.id], a[eye.id], `${eye.name} · ${primaryName}`)).join("");
     html += addGroup(p, a);
 
-    if (p.engine === "v0.3") html += flagsGroup(p, "Flags");
+    if (p.engine === "v0.3") html += flagsGroup(p, "Flags") + candidatesGroup(p);
 
     if (shadowPred) {
       const shadowName = engineLabel(run.shadow.id);
@@ -706,7 +747,10 @@
   }
 
   function updateStats() {
-    const cases = store.listCases();
+    const allCases = store.listCases();
+    const cases = allCases.filter(c => c.cohort === v03.cohort);
+    const historical = allCases.length - cases.length;
+    $("statsScope").textContent = `v0.3 candidate cohort · ${cases.length} cases${historical ? ` · ${historical} earlier cases retained in exports and engine comparison` : ""}`;
     const summary = scoring.summarize(scoresFor(cases, c => c.prediction));
     const exact = cases.flatMap(c => [c.comparison.od, c.comparison.os]).filter(e => e.exact).length;
     const eyes = cases.length * 2;
@@ -719,13 +763,18 @@
       [eyes ? pct(exact / eyes) : "—", "Exact eyes"]
     ].map(([value, label]) => `<div class="stat"><strong>${value}</strong><span>${label}</span></div>`).join("");
 
-    renderEngineCompare(cases);
+    renderEngineCompare(allCases);
+  }
+
+  function predictionFor(c, id) {
+    return [c.prediction, c.shadow && c.shadow.prediction].find(p => p &&
+      (p.engine || "v" + p.version.split(".").slice(0, 2).join(".")) === id);
   }
 
   function renderEngineCompare(cases) {
     const variants = [
-      [`Study · ${engineLabel(engines.primaryId())}`, c => c.prediction, true],
-      [`Shadow · ${engineLabel(engines.shadowId())}`, c => c.shadow && c.shadow.prediction],
+      ["v0.3 · all saved cases", c => predictionFor(c, "v0.3"), true],
+      ["v0.2 · all saved cases", c => predictionFor(c, "v0.2")],
       ["v0.3 selected", c => candidateSet(c, "selected")],
       ["v0.3 median", c => candidateSet(c, "median")],
       ["v0.3 most plus", c => candidateSet(c, "mostPlus")]
@@ -839,7 +888,8 @@
 
   async function newCase() {
     const dirty = state.stage !== "measure" ||
-      [...document.querySelectorAll("#measureSection input")].some(el => (el.type === "checkbox" ? el.checked : el.value.trim() !== ""));
+      $("previousRxKnown").dataset.value !== "" ||
+      [...document.querySelectorAll("#measureSection input, #measureSection select")].some(el => (el.type === "checkbox" ? el.checked : el.value.trim() !== ""));
     if (dirty) {
       const choice = await ask({
         title: "Discard this case?",
@@ -859,6 +909,10 @@
   function setSegment(el, value) {
     el.dataset.value = value;
     el.querySelectorAll("button").forEach(b => b.setAttribute("aria-checked", String(b.dataset.value === value)));
+    if (el.id === "previousRxKnown") {
+      $("previousRxFields").hidden = value !== "yes";
+      $("previousRxFields").disabled = value !== "yes";
+    }
   }
 
   function bindControls() {
@@ -890,6 +944,7 @@
     document.addEventListener("change", e => {
       const chip = e.target.closest(".chip");
       if (chip) chip.classList.toggle("on", e.target.checked);
+      (e.target.closest(".power") || e.target).classList.remove("invalid");
     });
 
     document.addEventListener("input", e => {
@@ -901,7 +956,7 @@
     document.addEventListener("keydown", e => {
       if (e.key !== "Enter" || !e.target.matches("input.field, input.row-input")) return;
       e.preventDefault();
-      const fields = [...document.querySelectorAll("fieldset:not([hidden]) input.field, fieldset:not([hidden]) input.row-input")]
+      const fields = [...document.querySelectorAll("fieldset:not([hidden]) input.field, fieldset:not([hidden]) input.row-input, fieldset:not([hidden]) select")]
         .filter(el => !el.disabled && el.offsetParent !== null);
       const next = fields[fields.indexOf(e.target) + 1];
       if (next) next.focus();
@@ -936,7 +991,7 @@
   setCaseId(newCaseId());
 
   const shadowWord = engines.primaryId() === "v0.2" ? "v0.3 runs in shadow" : "v0.2 runs in shadow";
-  $("engineLine").textContent = `Study engine ${engineLabel(engines.primaryId())} · ${shadowWord}`;
+  $("engineLine").textContent = `Candidate engine ${engineLabel(engines.primaryId())} · ${shadowWord}`;
 
   setStage("measure");
   updateStats();

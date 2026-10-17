@@ -54,6 +54,16 @@
         </div>
       </div>
 
+      <fieldset id="previousRxFields" hidden disabled>
+        <h2 class="group-header">Previous prescription · minus cylinder</h2>
+        <div class="eye-columns">
+          <section class="eye-section"><div class="group rx-table final" id="previous-od"></div></section>
+          <section class="eye-section"><div class="group rx-table final" id="previous-os"></div></section>
+        </div>
+        <div class="group"><label class="row"><span class="row-label">Previous ADD</span><select id="previousAdd" class="row-select"></select></label></div>
+        <p class="group-footer">Enter the current glasses prescription for both eyes. Leave cylinder blank for a sphere-only prescription.</p>
+      </fieldset>
+
       <h2 class="group-header">Autorefractor ticket</h2>
       <div class="group">
         <div class="row scan-row">
@@ -108,11 +118,11 @@
         </div>
         <label class="row">
           <span class="row-label">Near working distance</span>
-          <span class="row-value"><input id="nearWd" class="row-input num" type="text" inputmode="decimal" placeholder="—" /><span class="unit">cm</span></span>
+          <span class="row-value"><input id="nearWd" class="row-input num" type="text" inputmode="decimal" placeholder="400" aria-label="Near working distance in mm" /><span class="unit">mm</span></span>
         </label>
         <label class="row">
           <span class="row-label">Near point</span>
-          <span class="row-value"><input id="nearPoint" class="row-input num" type="text" inputmode="decimal" placeholder="—" /><span class="unit">cm</span></span>
+          <span class="row-value"><input id="nearPoint" class="row-input num" type="text" inputmode="decimal" placeholder="—" aria-label="Near point in mm" /><span class="unit">mm</span></span>
         </label>
       </div>
       <p class="group-footer">Vertex distance is the VD printed on the ticket. Near fields are optional and only feed the v0.3 ADD estimate. Near point is the push-up blur point, measured through the distance correction.</p>
@@ -171,6 +181,7 @@
 
     <!-- Study ------------------------------------------------------------- -->
     <h2 class="group-header study-header">Study</h2>
+    <p id="statsScope" class="group-footer"></p>
     <div class="group">
       <div id="stats" class="stats"></div>
     </div>

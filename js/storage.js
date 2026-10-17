@@ -151,14 +151,17 @@
       "final_sph","final_cyl","final_axis","final_m","final_add",
       "sph_error","cyl_error","axis_error","axis_tolerance","axis_within_tolerance",
       "se_error","j0_error","j45_error","vector_error","astigmatic_error","clinical_match",
-      "keratometry_disagreement","ametropia","astigmatism","flags","status"
+      "keratometry_disagreement","ametropia","astigmatism","flags","status",
+      "record_schema","cohort","near_wd_mm","near_point_mm",
+      "previous_sph","previous_cyl","previous_axis","previous_add"
     ];
 
     const rows = [];
     for (const c of cases) {
       if (!c.actual || !c.prediction) continue;
       const v03 = v03Prediction(c);
-      const obs = (c.shadow && c.shadow.observations) || {};
+      const obs = c.observations || (c.shadow && c.shadow.observations) || {};
+      const previous = c.input.previousRxKnown === "yes" ? c.input.previousRx : null;
       for (const { variant, prediction } of variantsFor(c)) {
         for (const eye of ["od", "os"]) {
           const pred = prediction[eye];
@@ -184,7 +187,14 @@
             ev && ev.keratometry ? fixed(ev.keratometry.disagreement) : "",
             ev ? ev.ametropia : "", ev ? ev.astigmatism : "",
             ev ? ev.flags.map(f => f.code).join(" ") : "",
-            v03 ? v03.status : ""
+            v03 ? v03.status : "",
+            c.schema || "", c.cohort || "",
+            obs.near && obs.near.workingDistanceCm != null ? fixed(obs.near.workingDistanceCm * 10) : "",
+            obs.near && obs.near.nearPointCm != null ? fixed(obs.near.nearPointCm * 10) : "",
+            previous && previous[eye] ? previous[eye].sphere : "",
+            previous && previous[eye] ? previous[eye].cylinder : "",
+            previous && previous[eye] ? previous[eye].axis : "",
+            previous ? previous.add : ""
           ]);
         }
       }

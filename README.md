@@ -8,8 +8,8 @@ Project Dioptra is a local-first web app (PWA) for a blinded study. An autorefra
 
 | Engine | Status | Role |
 |---|---|---|
-| **v0.2.0** | Frozen | Produces the locked study prediction for Cohort B. `js/config.js` and `js/algorithm.js` are unchanged. |
-| **v0.3.0** | Shadow | Runs on every case and is stored next to the study record. It never replaces the v0.2 result while `mode: "shadow"`. |
+| **v0.2.0** | Frozen comparison | Historical Cohort B engine; runs in shadow for new cases. `js/config.js` and `js/algorithm.js` are unchanged. |
+| **v0.3.0** | Active candidate | Produces the locked prediction for new cases in `v0.3-candidate-1`, using the existing prior offsets. |
 
 ### v0.2.0 (frozen for Cohort B)
 
@@ -22,7 +22,7 @@ Project Dioptra is a local-first web app (PWA) for a blinded study. An autorefra
 
 See the [freeze contract](docs/v0.2-freeze.md).
 
-### v0.3.0 (shadow)
+### v0.3.0 (active candidate)
 
 Full specification: [v0.3 engine](docs/v0.3-engine.md).
 
@@ -36,15 +36,17 @@ Full specification: [v0.3 engine](docs/v0.3-engine.md).
 
 All thresholds marked *provisional* in `js/config-v03.js` are uncalibrated.
 
-### Promoting v0.3
+### Candidate transition and future calibration
 
-After Cohort B is closed and exported:
+On 2026-10-16, v0.3 was promoted at the owner's request with `mode: "active"` and 1° final-axis entry. New records belong to `v0.3-candidate-1`, separate from Cohort B. No offsets were fitted and no prediction rules changed; the algorithm version remains 0.3.0. Existing records are retained untouched. Study statistics include only the new candidate cohort; engine comparisons select each stored prediction by its actual engine identity across all saved cases.
+
+For future calibration, close and export the relevant development cohort before fitting:
 
 ```sh
 node tools/fit-offsets.js project-dioptra-shadow-YYYY-MM-DD.csv --cohort-closed
 ```
 
-Paste the printed `sphereOffsets` and `offsetsProvenance` into `js/config-v03.js`, then set `mode: "active"` and `ui.finalAxisStep: 1`, and start a new cohort. The tool refuses v0.2 data unless `--cohort-closed` is passed. It reports leave-one-case-out error for three options: no offset, a global offset and stratified offsets.
+Any adopted offset changes require a new algorithm version and cohort. The tool refuses v0.2 data unless `--cohort-closed` is passed. It reports leave-one-case-out error for three options: no offset, a global offset and stratified offsets.
 
 ## Scoring
 
@@ -67,9 +69,11 @@ The parser is intentionally format-conservative: it looks for the ticket's OD/R 
 Cases are stored in the browser's local storage on the device. Nothing is sent anywhere.
 
 - **Study CSV.** Identical columns to the v0.2 Cohort B export.
-- **Engine comparison CSV.** One row per case × eye × engine variant (v0.2, v0.3, and each v0.3 estimator), with the cylinder-aware scores, repeatability evidence, stratum and flags.
+- **Engine comparison CSV.** One row per case × eye × engine variant (v0.2, v0.3, and each v0.3 estimator), with cylinder-aware scores, repeatability evidence, stratum and flags. Appended columns include record schema, cohort, near distances in mm, and the previous prescription for that eye plus ADD. Historical cm columns retain their meaning.
 
-Extra observations (repeat readings, reliability digits, vertex distance, PD, near distances, keratometry) are saved under `shadow` with `shadowOnly: true`. They are not part of the study record.
+New records use `schema: "dioptra-case-2"`, `cohort: "v0.3-candidate-1"`, and top-level `observations`. Historical `shadow.observations` remains readable. Previous Rx is saved as `input.previousRx` only when Yes is selected; it is collected for history and does not alter the current candidate prediction.
+
+Manual sphere/cylinder entry uses 0.25 D dropdowns with a sphere sign toggle; AR and final axes use 1° dropdowns. Exact scanned values between dropdown steps are preserved. VA choices show both decimal and feet (for example, `0.20 = 20/100`); stored values remain Snellen. Working distance and near point are entered in mm and converted to the engine's existing cm representation at the input boundary.
 
 ## Development
 
@@ -80,6 +84,8 @@ node tests/export-and-fit.test.js   # exports and offset fitting, on synthetic d
 ```
 
 `tests/algorithm.test.html` runs a browser smoke test. CI runs all of the above on every push and pull request.
+
+With Playwright and Chromium installed, `node tests/app-flow.browser.js` tests the complete candidate entry, scan-import, lock, reveal, save, and export flow in isolated browser storage, including historical records and a narrow mobile viewport.
 
 | Path | Purpose |
 |---|---|

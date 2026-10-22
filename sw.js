@@ -1,5 +1,5 @@
 // Network first, cache as offline fallback, so a deployed update is picked up on the next load.
-const CACHE = "dioptra-v0.3.0-candidate-1";
+const CACHE = "dioptra-v0.3.0-paper-optics-1";
 const ASSETS = [
   "./",
   "./index.html",
@@ -13,6 +13,8 @@ const ASSETS = [
   "./js/storage.js",
   "./js/ticket-scan.js",
   "./js/app.js",
+  "./js/optical-calculators.js",
+  "./js/workspace.js",
   "./manifest.webmanifest",
   "./assets/icon.svg",
   "./assets/icon-192.png",

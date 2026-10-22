@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#F6F4EE" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#111111" media="(prefers-color-scheme: dark)" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Dioptra" />
@@ -15,17 +15,27 @@
   <link rel="apple-touch-icon" href="assets/icon-192.png" />
   <link rel="stylesheet" href="css/app.css" />
 </head>
-<body data-stage="measure">
+<body data-stage="measure" data-view="case">
+  <a class="skip-link" href="#casePanel">Skip to content</a>
   <header class="navbar" id="navbar">
     <div class="navbar-inner">
-      <button id="newCaseBtn" class="nav-button" type="button">New Case</button>
-      <span class="nav-title" id="navTitle">Dioptra</span>
-      <button id="exportBtn" class="nav-button" type="button">Export</button>
+      <div class="brand">Dioptra<span class="brand-caption">REFRACTION STUDIO</span></div>
+      <div class="view-tabs" role="tablist" aria-label="Workspace">
+        <button id="caseTab" role="tab" aria-selected="true" aria-controls="casePanel" type="button">Refraction</button>
+        <button id="calculatorTab" role="tab" aria-selected="false" aria-controls="calculatorPanel" tabindex="-1" type="button">Calculators</button>
+      </div>
+      <div class="nav-actions" id="caseActions">
+        <button id="newCaseBtn" class="nav-button" type="button">New Case</button>
+        <button id="exportBtn" class="nav-button" type="button">Export</button>
+      </div>
+      <span id="navTitle" hidden>Dioptra</span>
     </div>
   </header>
 
-  <main class="content">
+  <main>
+  <section class="content" id="casePanel" role="tabpanel" aria-labelledby="caseTab" tabindex="0">
     <div class="large-title">
+      <p class="eyebrow">Observe · Refract · Compare</p>
       <h1 id="caseTitle">Case</h1>
       <p id="engineLine" class="title-sub"></p>
     </div>
@@ -196,6 +206,65 @@
     </div>
 
     <p class="footnote">Research prototype. Not a validated medical device and not a basis for prescribing or dispensing on its own. Data stays on this device.</p>
+  </section>
+
+  <section class="content calculator-panel" id="calculatorPanel" role="tabpanel" aria-labelledby="calculatorTab" tabindex="0" hidden>
+    <div class="large-title">
+      <p class="eyebrow">Optical essentials</p>
+      <h1>One Rx. Two perspectives.</h1>
+      <p class="title-sub">Transpose cylinder notation and find the spherical equivalent.</p>
+    </div>
+    <div class="calculator-layout">
+      <section class="calculator-entry" aria-labelledby="calculatorInputTitle">
+        <div class="section-heading"><h2 id="calculatorInputTitle">Original prescription</h2><button class="quiet-button" id="calculatorReset" type="button">Clear</button></div>
+        <p class="calculator-hint">Enter signed powers in diopters. Either cylinder notation works.</p>
+        <form id="calculatorForm" novalidate>
+          <div class="calculator-fields">
+            <label for="calcSphere">Sphere <span>SPH · D</span><input id="calcSphere" type="text" autocomplete="off" spellcheck="false" placeholder="−2.00" aria-describedby="calculatorError" /></label>
+            <label for="calcCylinder">Cylinder <span>CYL · D</span><input id="calcCylinder" type="text" autocomplete="off" spellcheck="false" placeholder="+3.00" aria-describedby="calculatorError" /></label>
+            <label for="calcAxis">Axis <span>1–180°</span><input id="calcAxis" type="text" inputmode="numeric" autocomplete="off" placeholder="90" aria-describedby="calculatorError axisHint" /></label>
+          </div>
+          <p id="axisHint" class="calculator-hint">For sphere only, enter 0 cylinder; no axis is needed.</p>
+          <p id="calculatorError" class="calculator-error" role="status" aria-live="polite"></p>
+          <button class="button-primary" type="submit">Calculate</button>
+        </form>
+        <details class="calculator-paste">
+          <summary>Paste a prescription</summary>
+          <form id="calculatorPasteForm" class="paste-form" novalidate>
+            <label for="calculatorPaste">Sphere, cylinder × axis</label>
+            <div><input id="calculatorPaste" type="text" autocomplete="off" placeholder="−2.00 +3.00 × 90" aria-describedby="calculatorPasteError" /><button class="quiet-button" type="submit">Apply</button></div>
+            <p id="calculatorPasteError" class="calculator-error" role="status"></p>
+          </form>
+        </details>
+      </section>
+      <section class="calculator-output" aria-label="Calculation results" aria-live="polite" aria-atomic="true">
+        <div id="calculatorEmpty" class="calculator-empty"><span class="empty-symbol" aria-hidden="true">±</span><h2>A different notation.<br>The same optical power.</h2><p>Enter a prescription to see both results here.</p></div>
+        <div id="calculatorResults" hidden>
+          <p class="calculator-original">Original <span id="calcOriginal"></span></p>
+          <div class="calculator-result">
+            <p class="eyebrow">01 / Transposition</p>
+            <h2 id="calcTransposed"></h2>
+            <p id="calcNotation" class="calculator-hint"></p>
+            <div class="result-actions"><button id="copyTransposed" class="quiet-button" type="button">Copy Rx</button><button id="useTransposed" class="quiet-button" type="button">Use as input ↔</button></div>
+          </div>
+          <div class="calculator-result">
+            <p class="eyebrow">02 / Spherical equivalent</p>
+            <h2 id="calcSE"></h2>
+            <p class="calculator-hint">Nearest 0.25 D · halfway values toward more plus</p>
+            <button id="copySE" class="quiet-button" type="button">Copy SE</button>
+          </div>
+          <details class="calculation-details">
+            <summary>How it’s calculated</summary>
+            <dl id="calculatorMath"></dl>
+            <p id="calculatorRounding" class="calculator-hint"></p>
+            <p class="calculator-hint">Quarter-diopter bounds are mathematical references, not a prescribing recommendation.</p>
+          </details>
+        </div>
+      </section>
+    </div>
+    <p id="calculatorStatus" class="calculator-status" role="status" aria-live="polite"></p>
+    <p class="footnote">An optical calculation, not a new prescription. Spherical equivalent does not retain astigmatic correction. This workspace does not read or save patient cases.</p>
+  </section>
   </main>
 
   <div class="action-bar" id="actionBar">
@@ -225,5 +294,7 @@
   <script src="js/storage.js"></script>
   <script src="js/ticket-scan.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/optical-calculators.js"></script>
+  <script src="js/workspace.js"></script>
 </body>
 </html>

@@ -4,8 +4,8 @@
   "description": "Local-first blinded autorefractor-to-Rx research prototype.",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#f2f2f7",
-  "theme_color": "#f2f2f7",
+  "background_color": "#F6F4EE",
+  "theme_color": "#F6F4EE",
   "icons": [
     {
       "src": "assets/icon-192.png",

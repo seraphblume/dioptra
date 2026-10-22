@@ -588,14 +588,14 @@
 
   function resetForm() {
     state.input = state.observations = state.run = state.actual = state.comparison = null;
-    document.querySelectorAll("input").forEach(el => {
+    $("casePanel").querySelectorAll("input").forEach(el => {
       if (el.type === "checkbox") el.checked = false;
       else el.value = "";
     });
-    document.querySelectorAll(".chip").forEach(c => c.classList.remove("on"));
-    document.querySelectorAll("select").forEach(el => { el.selectedIndex = 0; });
-    document.querySelectorAll(".field[data-sign]").forEach(el => { el.dataset.sign = "-1"; });
-    document.querySelectorAll(".sign:not(.static)").forEach(b => { b.textContent = MINUS; });
+    $("casePanel").querySelectorAll(".chip").forEach(c => c.classList.remove("on"));
+    $("casePanel").querySelectorAll("select").forEach(el => { el.selectedIndex = 0; });
+    $("casePanel").querySelectorAll(".field[data-sign]").forEach(el => { el.dataset.sign = "-1"; });
+    $("casePanel").querySelectorAll(".sign:not(.static)").forEach(b => { b.textContent = MINUS; });
     document.querySelectorAll(".invalid").forEach(el => el.classList.remove("invalid"));
     setSegment($("previousRxKnown"), "");
     $("comparisonContent").innerHTML = "";

@@ -160,8 +160,103 @@ const server = http.createServer(async (req, res) => {
     assert.equal(scanned.input.os.sphere, 1.37);
     assert.equal(scanned.observations.near.workingDistanceCm, 40);
     assert.equal(scanned.observations.near.nearPointCm, null);
+
+    // Tools are a separate workspace, not a shortcut around the blinded case flow.
+    const beforeTools = await page.evaluate(() => JSON.stringify(DioptraStorage.listCases()));
+    await page.locator("#age").fill("44");
+    await page.locator("#calculatorTab").click();
+    assert.equal(await page.locator("#casePanel").isVisible(), false);
+    assert.equal(await page.locator("#actionBar").isVisible(), false);
+    assert.equal(await page.locator("#caseActions").isVisible(), false);
+    await page.locator("#calculatorForm button[type=submit]").click();
+    assert.match(await page.locator("#calculatorError").innerText(), /Enter sphere/);
+    for (const [id, value] of Object.entries({ calcSphere: "-1.50", calcCylinder: "-1.25", calcAxis: "180" })) await page.locator(`#${id}`).fill(value);
+    await page.locator("#calculatorForm button[type=submit]").click();
+    assert.equal(await page.locator("#calcTransposed").innerText(), "-2.75 +1.25 × 090°");
+    assert.equal(await page.locator("#calcSE").innerText(), "-2.00 D");
+    assert.match(await page.locator("#calculatorMath").textContent(), /-2\.125 D/);
+    await page.evaluate(() => { Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async text => { window.copiedText = text; } } }); });
+    await page.locator("#copySE").click();
+    assert.equal(await page.evaluate(() => window.copiedText), "-2.00 D");
+    await page.locator("#useTransposed").click();
+    assert.equal(await page.locator("#calcSphere").inputValue(), "-2.75");
+    assert.equal(await page.locator("#calcTransposed").innerText(), "-1.50 -1.25 × 180°");
+    await page.locator("#calcAxis").fill("181");
+    assert.equal(await page.locator("#calculatorResults").isVisible(), false, "editing removes stale outputs");
+    await page.locator("#calculatorForm button[type=submit]").click();
+    assert.match(await page.locator("#calculatorError").innerText(), /1° to 180°/);
+    await page.locator(".calculator-paste summary").click();
+    await page.locator("#calculatorPaste").fill("−2,00 +3,00 × 90");
+    await page.locator("#calculatorPasteForm button").click();
+    assert.equal(await page.locator("#calcTransposed").innerText(), "+1.00 -3.00 × 180°");
+    assert.equal(await page.locator("#calcSE").innerText(), "-0.50 D");
+    await page.locator("#calculatorPaste").fill("1 2 x999");
+    await page.locator("#calculatorPasteForm button").click();
+    assert.match(await page.locator("#calculatorPasteError").innerText(), /1° to 180°/);
+    assert.equal(await page.locator("#calcSphere").inputValue(), "-2.00", "invalid paste never partially applies");
+    await page.evaluate(() => { Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async text => { window.copiedText = text; } } }); });
+    await page.locator("#copySE").click();
+    assert.equal(await page.evaluate(() => window.copiedText), "-0.50 D");
+    await page.evaluate(() => { navigator.clipboard.writeText = async () => { throw new Error("Denied"); }; });
+    await page.locator("#copyTransposed").click();
+    await page.locator("#calculatorStatus").filter({ hasText: /Clipboard unavailable/ }).waitFor();
+    await page.locator("#calculatorTab").focus();
+    await page.keyboard.press("ArrowLeft");
+    assert.equal(await page.locator("#caseTab").getAttribute("aria-selected"), "true");
+    assert.equal(await page.locator("#age").inputValue(), "44");
+    await page.locator("#newCaseBtn").click();
+    await page.getByRole("button", { name: "Discard", exact: true }).click();
+    await page.locator("#caseTab").focus();
+    await page.keyboard.press("End");
+    assert.equal(await page.locator("#calcSphere").inputValue(), "-2.00", "case reset preserves calculator inputs");
+    assert.equal(await page.locator("#calcSE").innerText(), "-0.50 D");
+
+    await page.locator("#calculatorForm button[type=submit]").click();
+    for (const colorScheme of ["light", "dark"]) {
+      await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
+      for (const width of [320, 390, 1280]) {
+        await page.setViewportSize({ width, height: 900 });
+        assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${colorScheme} calculator overflow at ${width}`);
+        if (process.env.DIOPTRA_SCREENSHOT_DIR && width !== 320) {
+          await page.locator(".calculator-paste summary").evaluate(el => { el.parentElement.open = false; });
+          await page.screenshot({ path: path.join(process.env.DIOPTRA_SCREENSHOT_DIR, `calculator-${colorScheme}-${width}.png`), fullPage: true });
+        }
+      }
+    }
+    await page.locator("#calculatorReset").click();
+    assert.equal(await page.locator("#calcSphere").inputValue(), "");
+    assert.equal(await page.locator("#calculatorResults").isVisible(), false);
+    await page.locator("#calcSphere").fill("1.13");
+    await page.locator("#calcCylinder").fill("0");
+    await page.locator("#calculatorForm button[type=submit]").click();
+    assert.equal(await page.locator("#calcTransposed").innerText(), "+1.13 DS");
+    assert.equal(await page.locator("#calcSE").innerText(), "+1.25 D");
+    assert.equal(await page.evaluate(() => JSON.stringify(DioptraStorage.listCases())), beforeTools);
+    await page.locator("#caseTab").click();
+    await page.locator("#age").fill("44");
+    for (const eye of ["od", "os"]) {
+      await page.locator(`#${eye}SelSph`).selectOption("1.00");
+      await page.locator(`#${eye}SelCyl`).selectOption("0.00");
+      await page.locator(`#${eye}SelAx`).selectOption("180");
+    }
+    for (const colorScheme of ["light", "dark"]) {
+      await page.emulateMedia({ colorScheme });
+      for (const width of [320, 390, 1280]) {
+        await page.setViewportSize({ width, height: 900 });
+        const overflow = await page.evaluate(() => ({ width: innerWidth, scroll: document.documentElement.scrollWidth,
+          elements: [...document.querySelectorAll("body *")].filter(e => e.getBoundingClientRect().width && e.getBoundingClientRect().right > innerWidth + 1).map(e => ({ tag: e.tagName, id: e.id, cls: e.className, right: e.getBoundingClientRect().right })).slice(0, 15) }));
+        assert.ok(overflow.scroll <= width, `${colorScheme} refraction overflow at ${width}: ${JSON.stringify(overflow)}`);
+      }
+      if (process.env.DIOPTRA_SCREENSHOT_DIR) await page.screenshot({ path: path.join(process.env.DIOPTRA_SCREENSHOT_DIR, `refraction-${colorScheme}-1280.png`), fullPage: true });
+    }
+    await page.locator("#primaryAction").click();
+    assert.equal(await page.locator("body").getAttribute("data-stage"), "refract", await page.locator("#toast").innerText());
+    await page.locator("#calculatorTab").click();
+    await page.locator("#caseTab").click();
+    assert.equal(await page.locator("body").getAttribute("data-stage"), "refract");
+    assert.equal(await page.locator("#comparisonContent").innerHTML(), "", "tab switch never reveals the locked prediction");
     assert.deepEqual(errors, []);
-    console.log("PASS: candidate form, cohort isolation, previous Rx, mm conversion, exports, scan import, mobile layout");
+    console.log("PASS: candidate form, cohort isolation, previous Rx, mm conversion, exports, scan import, calculators, tab isolation, keyboard navigation, light/dark mobile layouts");
   } finally {
     if (browser) await browser.close();
     await new Promise(resolve => server.close(resolve));

@@ -25,6 +25,9 @@ for (const s of [-10.37, -2, 0, 1.13, 10]) {
       const roundTrip = calculate(t.sphere, t.cylinder, t.axis);
       assert.deepEqual(roundTrip.transposed, r.original);
       assert.equal(roundTrip.se, r.se);
+      assert.equal(roundTrip.roundedSE, r.roundedSE);
+      assert.equal(r.roundedSE * 4, Math.round(r.roundedSE * 4));
+      assert.ok(Math.abs(r.roundedSE - r.se) <= 0.125 + 1e-10);
       assert.ok(r.lowerQuarter <= r.se && r.se <= r.upperQuarter);
       assert.ok(Math.abs(r.upperQuarter - r.lowerQuarter) <= 0.25);
     }
@@ -38,6 +41,9 @@ assert.equal(calculate("1.13", "0", "").lowerQuarter, 1);
 assert.equal(calculate("1.13", "0", "").upperQuarter, 1.25);
 assert.equal(calculate(-1.5, -1.25, 180).lowerQuarter, -2.25);
 assert.equal(calculate(-1.5, -1.25, 180).upperQuarter, -2);
+for (const [s, c, expected] of [[-1.5, -1.25, -2], [1.5, 1.25, 2.25], [0, -.25, 0], [0, .25, .25], [-2.12, 0, -2], [-2.13, 0, -2.25], [2.12, 0, 2], [2.13, 0, 2.25], [-2.25, 0, -2.25]]) {
+  assert.equal(calculate(s, c, 90).roundedSE, expected);
+}
 assert.deepEqual(parse("−2,00 +3,00 × 090°"), calculate(-2, 3, 90));
 assert.deepEqual(parse("plano ⌢ -.50 x 180"), calculate(0, -.5, 180));
 assert.deepEqual(parse("-1.25 x 90"), calculate(0, -1.25, 90));

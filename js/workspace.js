@@ -57,12 +57,13 @@
     $("calcOriginal").textContent = optics.formatRx(o);
     $("calcTransposed").textContent = optics.formatRx(t);
     $("calcNotation").textContent = t.cylinder === 0 ? "Sphere only · axis not applicable" : t.cylinder < 0 ? "Minus-cylinder notation" : "Plus-cylinder notation";
-    $("calcSE").textContent = `${f(se)} D`;
+    $("calcSE").textContent = `${f(next.roundedSE)} D`;
     const rows = [
       ["Sphere + cylinder", `${f(o.sphere)} + (${f(o.cylinder)}) = ${f(t.sphere)} D`],
       ["Reverse cylinder sign", `${f(o.cylinder)} → ${f(t.cylinder)} D`],
       ["Rotate axis by 90°", o.axis === null ? "Not applicable to a spherical lens" : `${o.axis}° → ${t.axis}°`],
-      ["Sphere + half cylinder", `${f(o.sphere)} + (${f(o.cylinder)} ÷ 2) = ${f(se)} D`]
+      ["Exact spherical equivalent", `${f(o.sphere)} + (${f(o.cylinder)} ÷ 2) = ${f(se)} D`],
+      ["Nearest 0.25 D", `${f(se)} D → ${f(next.roundedSE)} D (halfway values toward more plus)`]
     ];
     $("calculatorMath").replaceChildren(...rows.flatMap(([label, value]) => {
       const dt = document.createElement("dt"); dt.textContent = label;
@@ -104,7 +105,7 @@
   });
   async function copy(kind) {
     if (!result) return;
-    const text = kind === "rx" ? optics.formatRx(result.transposed) : `${optics.formatPower(result.se)} D`;
+    const text = kind === "rx" ? optics.formatRx(result.transposed) : `${optics.formatPower(result.roundedSE)} D`;
     try {
       await navigator.clipboard.writeText(text);
       $("calculatorStatus").textContent = `${kind === "rx" ? "Transposed Rx" : "Spherical equivalent"} copied.`;

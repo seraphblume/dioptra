@@ -32,6 +32,8 @@
       original: { sphere: s / 100, cylinder: c / 100, axis: a },
       transposed: { sphere: (s + c) / 100, cylinder: c === 0 ? 0 : -c / 100, axis: a === null ? null : a <= 90 ? a + 90 : a - 90 },
       se: twiceSE / 200,
+      // Nearest quarter diopter; exact midpoints go toward more plus.
+      roundedSE: Math.floor((twiceSE + 25) / 50) / 4,
       lowerQuarter: Math.floor(twiceSE / 50) / 4,
       upperQuarter: Math.ceil(twiceSE / 50) / 4
     };

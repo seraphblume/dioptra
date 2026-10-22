@@ -4,10 +4,10 @@
 
 The interface follows [L’Oeil](https://github.com/seraphblume/loeil)'s warm paper/ink palette, serif branding, fine rules and pill navigation, with device-matched light/dark themes. Refraction and Calculators are separate tabs; switching preserves the in-progress case without revealing a locked prediction. No remote styling or font dependencies are required.
 
-Calculators accept either cylinder sign and provide transposition and exact spherical equivalent (SE), with optional arithmetic steps and adjacent quarter-diopter values. They never change an engine, patient record or cohort. Resetting a case does not clear calculator work, and clearing the calculator does not touch a case. Calculator work is session-only and is not saved on reload.
+Calculators accept either cylinder sign and provide transposition and spherical equivalent (SE) rounded to the nearest 0.25 D. Optional arithmetic steps retain the exact SE and adjacent quarter-diopter values. They never change an engine, patient record or cohort. Resetting a case does not clear calculator work, and clearing the calculator does not touch a case. Calculator work is session-only and is not saved on reload.
 
 - Transposition: `S′ = S + C`, `C′ = −C`, axis rotated 90° within 1–180°.
-- SE: `S + C/2`, retained exactly to 0.005 D for hundredth-diopter inputs. No automatic quarter-diopter rounding or treatment recommendation.
+- SE: `S + C/2`, retained exactly to 0.005 D in calculation details. Display and Copy SE use the nearest 0.25 D; exact halfway values round toward more plus (−2.125 → −2.00, +2.125 → +2.25). This explicit mathematical convention is not a treatment recommendation. Transposition is not rounded.
 - Powers accept up to two decimal places, including decimal commas and Unicode minus signs. Sphere and transposed sphere must be within ±100 D; cylinder within ±20 D. Invalid numbers and axes are rejected, never clamped. Zero cylinder needs no axis.
 - Paste accepts `−2.00 +3.00 × 90`, cylinder-only `−1.25 × 90` (plano sphere), and sphere-only `−2.00 DS` or `plano`.
 - Copy reports clipboard failures honestly; displayed values remain manually selectable.

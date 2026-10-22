@@ -239,7 +239,9 @@ const server = http.createServer(async (req, res) => {
       await page.emulateMedia({ colorScheme });
       for (const width of [320, 390, 1280]) {
         await page.setViewportSize({ width, height: 900 });
-        assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${colorScheme} refraction overflow at ${width}`);
+        const overflow = await page.evaluate(() => ({ width: innerWidth, scroll: document.documentElement.scrollWidth,
+          elements: [...document.querySelectorAll("body *")].filter(e => e.getBoundingClientRect().width && e.getBoundingClientRect().right > innerWidth + 1).map(e => ({ tag: e.tagName, id: e.id, cls: e.className, right: e.getBoundingClientRect().right })).slice(0, 15) }));
+        assert.ok(overflow.scroll <= width, `${colorScheme} refraction overflow at ${width}: ${JSON.stringify(overflow)}`);
       }
       if (process.env.DIOPTRA_SCREENSHOT_DIR) await page.screenshot({ path: path.join(process.env.DIOPTRA_SCREENSHOT_DIR, `refraction-${colorScheme}-1280.png`), fullPage: true });
     }

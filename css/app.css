@@ -773,6 +773,8 @@ body[data-view="calculator"] #toast { display: none; }
   .navbar-inner { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding-left: 16px; padding-right: 16px; }
   .brand { font-size: 25px; }
   .nav-button { padding-left: 10px; padding-right: 10px; }
+  .stepper { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .stepper li { flex-direction: column; gap: 6px; font-size: 13px; }
   .row { flex-wrap: wrap; }
   .row-value { min-width: 0; max-width: 100%; }
 }

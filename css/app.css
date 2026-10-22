@@ -710,6 +710,7 @@ details.group[open] > summary { box-shadow: inset 0 -0.5px 0 var(--separator); }
 .skip-link { position: fixed; left: 12px; top: -100px; padding: 12px; z-index: 100; background: var(--tint); color: var(--on-tint); }
 .skip-link:focus { top: 12px; }
 .calculator-panel { padding-bottom: calc(48px + var(--safe-bottom)); }
+body[data-view="calculator"] #toast { display: none; }
 .calculator-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; margin-top: 24px; }
 .calculator-entry { align-self: start; border: 1px solid var(--separator); border-radius: var(--radius); padding: 28px; background: var(--cell); }
 .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }

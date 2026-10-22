@@ -207,6 +207,7 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("#calcSphere").inputValue(), "-2.00", "case reset preserves calculator inputs");
     assert.equal(await page.locator("#calcSE").innerText(), "-0.50 D");
 
+    await page.locator("#calculatorForm button[type=submit]").click();
     for (const colorScheme of ["light", "dark"]) {
       await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
       for (const width of [320, 390, 1280]) {
@@ -229,9 +230,21 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.evaluate(() => JSON.stringify(DioptraStorage.listCases())), beforeTools);
     await page.locator("#caseTab").click();
     await page.locator("#age").fill("44");
-    for (const eye of ["od", "os"]) await page.locator(`#${eye}SelSph`).selectOption("1.00");
+    for (const eye of ["od", "os"]) {
+      await page.locator(`#${eye}SelSph`).selectOption("1.00");
+      await page.locator(`#${eye}SelCyl`).selectOption("0.00");
+      await page.locator(`#${eye}SelAx`).selectOption("180");
+    }
+    for (const colorScheme of ["light", "dark"]) {
+      await page.emulateMedia({ colorScheme });
+      for (const width of [320, 390, 1280]) {
+        await page.setViewportSize({ width, height: 900 });
+        assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${colorScheme} refraction overflow at ${width}`);
+      }
+      if (process.env.DIOPTRA_SCREENSHOT_DIR) await page.screenshot({ path: path.join(process.env.DIOPTRA_SCREENSHOT_DIR, `refraction-${colorScheme}-1280.png`), fullPage: true });
+    }
     await page.locator("#primaryAction").click();
-    assert.equal(await page.locator("body").getAttribute("data-stage"), "refract");
+    assert.equal(await page.locator("body").getAttribute("data-stage"), "refract", await page.locator("#toast").innerText());
     await page.locator("#calculatorTab").click();
     await page.locator("#caseTab").click();
     assert.equal(await page.locator("body").getAttribute("data-stage"), "refract");

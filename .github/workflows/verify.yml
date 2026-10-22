@@ -35,6 +35,9 @@ jobs:
       - name: Verify exports and offset fitting
         run: node tests/export-and-fit.test.js
 
+      - name: Verify optical calculators
+        run: node tests/optical-calculators.test.js
+
       - name: Install browser test runtime
         run: |
           npm install --no-save --package-lock=false playwright@1.62.1

@@ -29,14 +29,13 @@ const server = http.createServer(async (req, res) => {
     page.on("pageerror", err => errors.push(err.message));
     const url = `http://127.0.0.1:${server.address().port}`;
     await page.goto(url);
-    assert.match(await page.locator("#engineLine").innerText(), /Candidate engine v0.3.0/);
+    assert.match(await page.locator("#engineLine").innerText(), /Experimental v0.4.0-rc.1 · unvalidated/);
     assert.equal(await page.locator("#previousRxFields").isVisible(), false);
 
     // A real old-format record must retain both engine identities and its original bytes.
     const historical = await page.evaluate(() => {
       const input = { age: 25, previousRxKnown: "", od: { sphere: -2.5, cylinder: -1.25, axis: 178 }, os: { sphere: -2.75, cylinder: -1, axis: 168 } };
-      DIOPTRA_V03_CONFIG.mode = "shadow";
-      const run = DioptraEngines.run(input);
+      const run = { primary: { prediction: DioptraAlgorithm.predictCase(input) }, shadow: { prediction: DioptraEngineV03.predictCase(input) } };
       const actual = { od: { ...input.od }, os: { ...input.os }, add: null, note: "Synthetic historical case" };
       const record = { caseId: "RX-0001", savedAt: "2026-10-01T12:00:00Z", input, actual, prediction: run.primary.prediction,
         comparison: { od: DioptraAlgorithm.compareEye(run.primary.prediction.od, actual.od), os: DioptraAlgorithm.compareEye(run.primary.prediction.os, actual.os) },
@@ -47,7 +46,7 @@ const server = http.createServer(async (req, res) => {
     await page.reload();
     assert.match(await page.locator("#statsScope").innerText(), /0 cases · 1 earlier cases/);
     assert.equal(await page.locator("#stats .stat strong").first().innerText(), "0");
-    assert.equal(await page.locator("#engineCompare tr").count(), 6);
+    assert.equal(await page.locator("#engineCompare tr").count(), 0, "historical data do not contaminate prospective RC stats");
     const oldExport = await page.evaluate(() => DioptraStorage.toShadowCSV(DioptraStorage.listCases()));
     const oldRows = oldExport.split("\n").map(r => r.split(","));
     assert.equal(oldRows[1][oldRows[0].indexOf("near_wd_mm")], "400");
@@ -79,6 +78,11 @@ const server = http.createServer(async (req, res) => {
     }
     await page.getByRole("button", { name: "Toggle OD previous sphere sign" }).click();
     await page.locator("#previousAdd").selectOption("1.25");
+    await page.locator("#previousWornMonths").fill("24.5");
+    await page.locator("#primaryAction").click();
+    assert.equal(await page.locator("body").getAttribute("data-stage"), "measure");
+    assert.match(await page.locator("#toast").innerText(), /whole months/);
+    await page.locator("#previousWornMonths").fill("36");
     await page.getByRole("radio", { name: "No", exact: true }).click();
     assert.equal(await page.locator("#previousRxFields").isVisible(), false);
     await page.getByRole("radio", { name: "Yes", exact: true }).click();
@@ -98,7 +102,8 @@ const server = http.createServer(async (req, res) => {
       await page.screenshot({ path: path.join(process.env.DIOPTRA_SCREENSHOT_DIR, "dioptra-candidate-mobile.png"), fullPage: true });
     }
     await page.locator("#primaryAction").click();
-    assert.match(await page.locator("#lockedDetail").innerText(), /v0.3.0/);
+    assert.match(await page.locator("#lockedDetail").innerText(), /v0.4.0-rc.1/);
+    assert.equal(await page.locator("#agreementScore").count(), 0, "no post-exam score before final Rx");
     for (const eye of ["od", "os"]) {
       await page.locator(`#${eye}FinSph`).selectOption("2.75");
       await page.locator(`#${eye}FinCyl`).selectOption("1.25");
@@ -106,32 +111,49 @@ const server = http.createServer(async (req, res) => {
     }
     await page.locator("#primaryAction").click();
     assert.equal(await page.locator("body").getAttribute("data-stage"), "compare");
-    assert.match(await page.locator("#comparisonContent").innerText(), /Right eye · v0\.3\.0/i);
+    assert.match(await page.locator("#comparisonContent").innerText(), /Right eye · v0\.4\.0-rc\.1/i);
+    assert.match(await page.locator("#agreementScore").innerText(), /% · \d\/6 checks/);
+    assert.match(await page.locator("#comparisonContent").innerText(), /36 months/);
+    assert.match(await page.locator("#comparisonContent").innerText(), /not clinical confidence/i);
+    for (const width of [320, 390, 1280]) {
+      await page.setViewportSize({ width, height: 900 });
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `RC agreement overflows at ${width}`);
+      if (process.env.DIOPTRA_SCREENSHOT_DIR && width !== 320) {
+        await page.locator("#agreementScore").scrollIntoViewIfNeeded();
+        await page.screenshot({ path: path.join(process.env.DIOPTRA_SCREENSHOT_DIR, `rc-agreement-${width}.png`) });
+      }
+    }
     await page.locator("#primaryAction").click();
     const saved = await page.evaluate(() => DioptraStorage.listCases());
     assert.equal(saved.length, 2);
     assert.equal(JSON.stringify(saved[0]), historical, "historical record is untouched");
     const c = saved[1];
-    assert.equal(c.schema, "dioptra-case-2");
-    assert.equal(c.cohort, "v0.3-candidate-1");
-    assert.equal(c.prediction.engine, "v0.3");
+    assert.equal(c.schema, "dioptra-case-3");
+    assert.equal(c.cohort, "v0.4-rc1-prospective");
+    assert.equal(c.prediction.engine, "v0.4");
     assert.equal(c.prediction.od.axis, 178);
     assert.equal(c.prediction.tentativeAdd, 1.75);
-    assert.equal(c.shadow.prediction.version, "0.2.0");
+    assert.equal(c.shadow.prediction.version, "0.3.0");
     assert.equal(c.observations.near.workingDistanceCm, 33);
     assert.equal(c.observations.near.nearPointCm, 50);
     assert.equal(c.input.previousRx.od.sphere, 1);
     assert.equal(c.input.previousRx.os.sphere, -1);
     assert.equal(c.input.previousRx.od.cylinder, 0);
     assert.equal(c.input.previousRx.add, 1.25);
+    assert.equal(c.input.previousRx.wornMonths, 36);
+    assert.equal(c.agreement.version, "rx-agreement-1");
+    assert.equal(c.agreement.total, 6);
+    assert.equal(await page.locator("#engineCompare tr").count(), 9);
+    assert.doesNotMatch(await page.locator("#engineCompare").innerText(), /v0\.2/);
     assert.equal(c.input.od.va, "20/100");
     assert.equal(await page.locator("#previousRxFields").isVisible(), false);
     assert.equal(await page.locator("#nearWd").inputValue(), "");
+    assert.equal(await page.locator("#previousWornMonths").inputValue(), "");
     assert.equal(await page.locator("#stats .stat strong").first().innerText(), "1");
     const csv = await page.evaluate(() => DioptraStorage.toShadowCSV(DioptraStorage.listCases()));
     const rows = csv.split("\n").map(r => r.split(","));
-    const recordRow = rows.find(r => r[0] === c.caseId && r[4] === "v0.3" && r[5] === "od");
-    for (const [field, value] of Object.entries({ near_wd_mm: "330", near_point_mm: "500", previous_sph: "1", previous_cyl: "0", previous_axis: "0", previous_add: "1.25", cohort: "v0.3-candidate-1", record_schema: "dioptra-case-2" })) {
+    const recordRow = rows.find(r => r[0] === c.caseId && r[4] === "v0.4" && r[5] === "od");
+    for (const [field, value] of Object.entries({ near_wd_mm: "330", near_point_mm: "500", previous_sph: "1", previous_cyl: "0", previous_axis: "0", previous_add: "1.25", previous_rx_worn_months: "36", agreement_percent: String(c.agreement.percent), agreement_total: "6", cohort: "v0.4-rc1-prospective", record_schema: "dioptra-case-3" })) {
       assert.equal(recordRow[rows[0].indexOf(field)], value, field);
     }
 
@@ -149,6 +171,7 @@ const server = http.createServer(async (req, res) => {
     await page.locator("#age").fill("30");
     await page.getByRole("radio", { name: "Yes", exact: true }).click();
     await page.locator("#odPrevSph").selectOption("4.00");
+    await page.locator("#previousWornMonths").fill("48");
     await page.getByRole("radio", { name: "No", exact: true }).click();
     await page.locator("#primaryAction").click();
     for (const eye of ["od", "os"]) await page.locator(`#${eye}FinSph`).selectOption("0.00");
@@ -298,7 +321,8 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("body").getAttribute("data-stage"), "compare");
     await page.locator("#primaryAction").click();
     const zeroCase = await page.evaluate(() => DioptraStorage.listCases().at(-1));
-    assert.equal(zeroCase.entryRevision, "zero-axis-pinhole-1");
+    assert.equal(zeroCase.entryRevision, "v04-rc-rx-duration-1");
+    assert.equal(zeroCase.agreement.total, 4, "sphere-only axes are excluded, not free passes");
     assert.equal(zeroCase.input.od.pinhole, "");
     assert.equal(zeroCase.input.os.pinhole, "20/20");
     for (const eye of ["od", "os"]) {

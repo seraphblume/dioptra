@@ -71,7 +71,10 @@
           <section class="eye-section"><div class="group rx-table final" id="previous-os"></div></section>
         </div>
         <div class="group"><label class="row"><span class="row-label">Previous ADD</span><select id="previousAdd" class="row-select"></select></label></div>
+        <div class="group"><label class="row"><span class="row-label">Time wearing this Rx</span><span class="row-value"><input id="previousWornMonths" class="row-input num short" type="number" min="0" max="600" step="1" list="rxDurationOptions" placeholder="Unknown" aria-label="Time wearing previous Rx in months" /><span class="unit">months</span></span></label></div>
+        <datalist id="rxDurationOptions"><option value="3"></option><option value="6"></option><option value="12"></option><option value="18"></option><option value="24"></option><option value="36"></option><option value="60"></option><option value="120"></option></datalist>
         <p class="group-footer">Enter the current glasses prescription for both eyes. Leave cylinder blank for a sphere-only prescription.</p>
+        <p class="group-footer">Duration is optional: blank means unknown; 0 means less than one month. It is recorded as context, not used to alter the prediction or explain reduced acuity.</p>
       </fieldset>
 
       <h2 class="group-header">Autorefractor ticket</h2>
@@ -109,7 +112,7 @@
           </div>
         </section>
       </div>
-      <p class="group-footer">Copy the three readings and the bracketed line from the autorefractor ticket. Only the bracketed line is required; the readings let the v0.3 engine measure repeatability. Q is the reliability digit printed after each reading.</p>
+      <p class="group-footer">Copy the three readings and the bracketed line from the autorefractor ticket. Only the bracketed line is required; repeat readings help assess consistency. Q is the reliability digit printed after each reading.</p>
 
       <h2 class="group-header">Instrument &amp; near</h2>
       <div class="group">
@@ -135,7 +138,7 @@
           <span class="row-value"><input id="nearPoint" class="row-input num" type="text" inputmode="decimal" placeholder="—" aria-label="Near point in mm" /><span class="unit">mm</span></span>
         </label>
       </div>
-      <p class="group-footer">Vertex distance is the VD printed on the ticket. Near fields are optional and only feed the v0.3 ADD estimate. Near point is the push-up blur point, measured through the distance correction.</p>
+      <p class="group-footer">Vertex distance is the VD printed on the ticket. Near fields are optional and only feed the ADD estimate. Near point is the push-up blur point, measured through the distance correction.</p>
 
       <details class="group disclosure" id="kSection">
         <summary class="row disclosure-row"><span class="row-label">Keratometry</span><span class="row-detail">Optional</span></summary>
@@ -289,6 +292,8 @@
   <script src="js/algorithm.js"></script>
   <script src="js/config-v03.js"></script>
   <script src="js/engine-v03.js"></script>
+  <script src="js/config-v04.js"></script>
+  <script src="js/engine-v04.js"></script>
   <script src="js/scoring.js"></script>
   <script src="js/engines.js"></script>
   <script src="js/storage.js"></script>

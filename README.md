@@ -1,5 +1,11 @@
 # Project Dioptra
 
+## Current release: v0.4.0-rc.1 (experimental, unvalidated)
+
+New cases use the fitted v0.4 RC as primary and unchanged v0.3 as shadow comparator. v0.2 no longer runs on new cases; historical records and frozen sources are retained. A new prospective cohort keeps RC evaluation separate from development cases.
+
+The post-exam percentage is **agreement within explicit tolerances, not clinical confidence**. Previous-Rx wearing duration is optional context and never changes a prediction. See [the RC specification](docs/v0.4-rc.md) for the exact offsets, fitting limitations, pediatric/sparse-group fallbacks, scoring denominator, export additions and validation plan. The v0.3/v0.2 sections below document earlier releases, not current routing.
+
 ## Paper-and-ink workspace
 
 The interface follows [L’Oeil](https://github.com/seraphblume/loeil)'s warm paper/ink palette, serif branding, fine rules and pill navigation, with device-matched light/dark themes. Refraction and Calculators are separate tabs; switching preserves the in-progress case without revealing a locked prediction. No remote styling or font dependencies are required.

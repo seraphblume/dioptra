@@ -122,12 +122,11 @@
     const variants = [];
     if (c.prediction) variants.push({ variant: engineId(c.prediction), prediction: c.prediction });
     if (c.shadow && c.shadow.prediction) variants.push({ variant: engineId(c.shadow.prediction), prediction: c.shadow.prediction });
-    const v03 = v03Prediction(c);
-    if (v03) {
+    for (const p of [c.prediction, c.shadow && c.shadow.prediction].filter(p => p && p.od.candidates && p.os.candidates)) {
       for (const name of ["selected", "median", "mostPlus"]) {
-        const od = v03.od.candidates && v03.od.candidates[name];
-        const os = v03.os.candidates && v03.os.candidates[name];
-        if (od && os) variants.push({ variant: `v0.3:${name}`, prediction: { od, os, tentativeAdd: v03.tentativeAdd } });
+        const od = p.od.candidates[name];
+        const os = p.os.candidates[name];
+        if (od && os) variants.push({ variant: `${engineId(p)}:${name}`, prediction: { od, os, tentativeAdd: p.tentativeAdd } });
       }
     }
     return variants;
@@ -153,7 +152,8 @@
       "se_error","j0_error","j45_error","vector_error","astigmatic_error","clinical_match",
       "keratometry_disagreement","ametropia","astigmatism","flags","status",
       "record_schema","cohort","near_wd_mm","near_point_mm",
-      "previous_sph","previous_cyl","previous_axis","previous_add"
+      "previous_sph","previous_cyl","previous_axis","previous_add",
+      "previous_rx_worn_months","agreement_percent","agreement_passed","agreement_total","agreement_version","entry_revision"
     ];
 
     const rows = [];
@@ -163,12 +163,16 @@
       const obs = c.observations || (c.shadow && c.shadow.observations) || {};
       const previous = c.input.previousRxKnown === "yes" ? c.input.previousRx : null;
       for (const { variant, prediction } of variantsFor(c)) {
+        const source = [c.prediction, c.shadow && c.shadow.prediction].find(p => engineId(p) === variant.split(":")[0]);
+        // Retain the legacy evidence fallback for historical v0.2 exports.
+        const evidence = source && source.od.evidence ? source : v03;
+        const agreement = c.schema === "dioptra-case-3" ? scoring.agreementCase(prediction, c.actual) : null;
         for (const eye of ["od", "os"]) {
           const pred = prediction[eye];
           const actual = c.actual[eye];
           if (!pred || !actual) continue;
           const s = scoring.scoreEye(pred, actual);
-          const ev = v03 ? v03[eye] : null;
+          const ev = evidence ? evidence[eye] : null;
           const input = c.input[eye] || {};
           rows.push([
             c.caseId, c.savedAt, c.prediction.version, engineId(c.prediction), variant, eye, c.input.age,
@@ -187,14 +191,17 @@
             ev && ev.keratometry ? fixed(ev.keratometry.disagreement) : "",
             ev ? ev.ametropia : "", ev ? ev.astigmatism : "",
             ev ? ev.flags.map(f => f.code).join(" ") : "",
-            v03 ? v03.status : "",
+            evidence ? evidence.status : "",
             c.schema || "", c.cohort || "",
             obs.near && obs.near.workingDistanceCm != null ? fixed(obs.near.workingDistanceCm * 10) : "",
             obs.near && obs.near.nearPointCm != null ? fixed(obs.near.nearPointCm * 10) : "",
             previous && previous[eye] ? previous[eye].sphere : "",
             previous && previous[eye] ? previous[eye].cylinder : "",
             previous && previous[eye] ? previous[eye].axis : "",
-            previous ? previous.add : ""
+            previous ? previous.add : "",
+            previous && previous.wornMonths != null ? previous.wornMonths : "",
+            agreement ? agreement.percent : "", agreement ? agreement.passed : "", agreement ? agreement.total : "",
+            agreement ? agreement.version : "", c.entryRevision || ""
           ]);
         }
       }

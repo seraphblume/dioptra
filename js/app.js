@@ -1,7 +1,7 @@
 (function () {
   const $ = id => document.getElementById(id);
   const cfg = window.DIOPTRA_CONFIG;
-  const v03 = window.DIOPTRA_V03_CONFIG;
+  const activeCfg = window.DIOPTRA_V04_CONFIG;
   const alg = window.DioptraAlgorithm;
   const engines = window.DioptraEngines;
   const scoring = window.DioptraScoring;
@@ -33,6 +33,9 @@
   const MEDICAL = [["diabetes", "Diabetes"], ["hypertension", "Hypertension"], ["pregnancy", "Pregnancy"]];
 
   const FLAG_TITLES = {
+    EXPERIMENTAL_RC: "Experimental release candidate",
+    PEDIATRIC_PRIOR: "Pediatric calibration unavailable",
+    SPARSE_CALIBRATION: "Limited hyperopic calibration",
     VERTEX_CONVERTED: "Vertex distance converted",
     VERTEX_ASSUMED: "Vertex distance assumed",
     AR_REPEATS_MISSING: "Repeat readings not entered",
@@ -124,7 +127,7 @@
   }
 
   function buildFinalTables() {
-    const step = (v03.ui && v03.ui.finalAxisStep) || 5;
+    const step = (activeCfg.ui && activeCfg.ui.finalAxisStep) || 5;
     for (const [kind, suffix] of [["final", "Fin"], ["previous", "Prev"]]) {
       for (const eye of EYES) {
         const p = `${eye.id}${suffix}`;
@@ -476,6 +479,10 @@
         previousRx[eye.id] = r;
       }
       previousRx.add = parsed("previousAdd");
+      previousRx.wornMonths = optional("previousWornMonths", 0, 600, "Time wearing previous Rx (0–600 months)");
+      if (previousRx.wornMonths != null && !Number.isInteger(previousRx.wornMonths)) {
+        markInvalid(invalid, errors, "previousWornMonths", "Enter whole months, or leave duration unknown.");
+      }
     }
 
     const symptomData = readSymptoms();
@@ -606,15 +613,16 @@
   function save() {
     const run = state.run;
     const record = {
-      schema: "dioptra-case-2",
-      entryRevision: "zero-axis-pinhole-1",
-      cohort: v03.cohort,
+      schema: "dioptra-case-3",
+      entryRevision: "v04-rc-rx-duration-1",
+      cohort: activeCfg.cohort,
       caseId: state.input.caseId,
       savedAt: new Date().toISOString(),
       input: state.input,
       prediction: run.primary.prediction,
       actual: state.actual,
       comparison: state.comparison,
+      agreement: scoring.agreementCase(run.primary.prediction, state.actual),
       observations: state.observations,
       shadow: {
         shadowOnly: true,
@@ -705,7 +713,7 @@
   }
 
   function flagsFor(prediction) {
-    if (!prediction || prediction.engine !== "v0.3") return [];
+    if (!prediction || !["v0.3", "v0.4"].includes(prediction.engine)) return [];
     const list = [...(prediction.flags || [])];
     for (const eye of EYES) {
       for (const f of prediction[eye.id].flags) list.push({ ...f, eye: eye.short });
@@ -714,7 +722,7 @@
   }
 
   function flagsGroup(prediction, title) {
-    if (!prediction || prediction.engine !== "v0.3") return "";
+    if (!prediction || !["v0.3", "v0.4"].includes(prediction.engine)) return "";
     const flags = flagsFor(prediction);
     const items = flags.length
       ? flags.map(f => `
@@ -751,7 +759,7 @@
       const used = v03p.od.estimator === key ? `<span class="badge">Used</span>` : "";
       return `<div class="row"><span class="row-label">${label} ${used}</span><span class="cand">${lines}</span></div>`;
     }).join("");
-    return `<h2 class="group-header">v0.3 estimators</h2><div class="group">${rows}</div>
+    return `<h2 class="group-header">${esc(v03p.engine)} estimators</h2><div class="group">${rows}</div>
       <p class="group-footer">All three are computed on every case so they can be compared once the cohort closes.</p>`;
   }
 
@@ -761,17 +769,29 @@
     const a = state.actual;
     const primaryName = engineLabel(run.primary.id);
     const shadowPred = run.shadow.prediction;
-    const v03p = p.engine === "v0.3" ? p : shadowPred && shadowPred.engine === "v0.3" ? shadowPred : null;
-
-    let html = EYES.map(eye => eyeTable(eye, p[eye.id], a[eye.id], `${eye.name} · ${primaryName}`)).join("");
+    const agreement = scoring.agreementCase(p, a);
+    let html = `<h2 class="group-header">Post-exam agreement · ${esc(primaryName)}</h2>
+      <div class="group"><div class="row"><span class="row-label">Within tolerance</span><strong id="agreementScore">${agreement.percent}% · ${agreement.passed}/${agreement.total} checks</strong></div></div>
+      <p class="group-footer">Agreement with your entered Rx—not clinical confidence or proof either Rx is correct. Each eye contributes sphere ±0.25 D, cylinder ±0.25 D and cylinder-dependent axis tolerance. Axis is excluded when either cylinder is zero. ADD is assessed separately; 100% does not mean an exact match.</p>`;
+    html += EYES.map(eye => eyeTable(eye, p[eye.id], a[eye.id], `${eye.name} · ${primaryName}`)).join("");
     html += addGroup(p, a);
+    const previous = state.input.previousRx;
+    if (previous) {
+      const duration = previous.wornMonths == null ? "Unknown" : previous.wornMonths === 0 ? "Less than 1 month" : `${previous.wornMonths} months`;
+      html += `<h2 class="group-header">Habitual prescription context</h2><div class="group"><div class="row"><span class="row-label">Time wearing previous Rx</span><span class="row-detail">${duration}</span></div>`;
+      for (const eye of EYES) {
+        const before = previous[eye.id], after = a[eye.id];
+        html += `<div class="row"><span class="row-label">${eye.short} final − previous SE</span><span class="row-detail">${fmtDelta(after.sphere + after.cylinder / 2 - before.sphere - before.cylinder / 2)} D</span></div>`;
+      }
+      html += `</div><p class="group-footer">Duration and change are context only. They do not alter the prediction or agreement score and do not explain limited visual improvement.</p>`;
+    }
 
-    if (p.engine === "v0.3") html += flagsGroup(p, "Flags") + candidatesGroup(p);
+    html += flagsGroup(p, "RC limitations and review flags") + candidatesGroup(p);
 
     if (shadowPred) {
       const shadowName = engineLabel(run.shadow.id);
       const inner = EYES.map(eye => eyeTable(eye, shadowPred[eye.id], a[eye.id], `${eye.name} · ${shadowName}`)).join("") +
-        (shadowPred.engine === "v0.3" ? flagsGroup(shadowPred, "Flags") + candidatesGroup(v03p) : "");
+        flagsGroup(shadowPred, "Flags") + candidatesGroup(shadowPred);
       html += `
         <details class="shadow-block">
           <summary class="group row disclosure-row"><span class="row-label">Shadow engine</span><span class="row-detail">${shadowName}</span></summary>
@@ -800,9 +820,9 @@
 
   function updateStats() {
     const allCases = store.listCases();
-    const cases = allCases.filter(c => c.cohort === v03.cohort);
+    const cases = allCases.filter(c => c.cohort === activeCfg.cohort);
     const historical = allCases.length - cases.length;
-    $("statsScope").textContent = `v0.3 candidate cohort · ${cases.length} cases${historical ? ` · ${historical} earlier cases retained in exports and engine comparison` : ""}`;
+    $("statsScope").textContent = `v0.4 RC prospective cohort · ${cases.length} cases${historical ? ` · ${historical} earlier cases retained in exports` : ""}`;
     const summary = scoring.summarize(scoresFor(cases, c => c.prediction));
     const exact = cases.flatMap(c => [c.comparison.od, c.comparison.os]).filter(e => e.exact).length;
     const eyes = cases.length * 2;
@@ -815,7 +835,7 @@
       [eyes ? pct(exact / eyes) : "—", "Exact eyes"]
     ].map(([value, label]) => `<div class="stat"><strong>${value}</strong><span>${label}</span></div>`).join("");
 
-    renderEngineCompare(allCases);
+    renderEngineCompare(cases);
   }
 
   function predictionFor(c, id) {
@@ -824,29 +844,27 @@
   }
 
   function renderEngineCompare(cases) {
-    const variants = [
-      ["v0.3 · all saved cases", c => predictionFor(c, "v0.3"), true],
-      ["v0.2 · all saved cases", c => predictionFor(c, "v0.2")],
-      ["v0.3 selected", c => candidateSet(c, "selected")],
-      ["v0.3 median", c => candidateSet(c, "median")],
-      ["v0.3 most plus", c => candidateSet(c, "mostPlus")]
-    ];
+    const paired = cases.filter(c => predictionFor(c, "v0.4") && predictionFor(c, "v0.3"));
+    const variants = [["v0.4 RC · prospective", c => predictionFor(c, "v0.4"), true],
+      ["v0.3 · paired shadow", c => predictionFor(c, "v0.3")]];
+    for (const id of ["v0.4", "v0.3"]) for (const key of ["selected", "median", "mostPlus"]) {
+      variants.push([`${id} ${key}`, c => candidateSet(c, key, id)]);
+    }
     const rows = variants.map(([label, pick, primary]) => {
-      const s = scoring.summarize(scoresFor(cases, pick));
+      const s = scoring.summarize(scoresFor(paired, pick));
       if (!s.eyes) return "";
       return `<tr class="${primary ? "primary-row" : ""}"><td>${label}</td><td class="col-eyes">${s.eyes}</td><td>${pct(s.clinicalMatchRate)}</td>
         <td>${fmtDelta(s.meanSEBias)}</td><td>${s.meanAbsSEError == null ? "—" : s.meanAbsSEError.toFixed(2)}</td>
         <td>${s.meanVectorError == null ? "—" : s.meanVectorError.toFixed(2)}</td></tr>`;
     }).join("");
-    $("engineCompareDetail").textContent = cases.length ? `${cases.length} case${cases.length === 1 ? "" : "s"}` : "No cases yet";
+    $("engineCompareDetail").textContent = cases.length ? `${paired.length}/${cases.length} paired RC cases` : "No RC cases yet";
     $("engineCompare").innerHTML = rows
       ? `<table><thead><tr><th>Engine</th><th class="col-eyes">Eyes</th><th>Match</th><th>Bias</th><th>|SE|</th><th>Vector</th></tr></thead><tbody>${rows}</tbody></table>`
       : `<p class="empty">Saved cases will appear here.</p>`;
   }
 
-  function candidateSet(c, key) {
-    const p = c.prediction && c.prediction.engine === "v0.3" ? c.prediction
-      : c.shadow && c.shadow.prediction && c.shadow.prediction.engine === "v0.3" ? c.shadow.prediction : null;
+  function candidateSet(c, key, id) {
+    const p = predictionFor(c, id);
     if (!p) return null;
     return { od: p.od.candidates[key], os: p.os.candidates[key] };
   }
@@ -1047,8 +1065,7 @@
   setSegment($("previousRxKnown"), "");
   setCaseId(newCaseId());
 
-  const shadowWord = engines.primaryId() === "v0.2" ? "v0.3 runs in shadow" : "v0.2 runs in shadow";
-  $("engineLine").textContent = `Candidate engine ${engineLabel(engines.primaryId())} · ${shadowWord}`;
+  $("engineLine").textContent = `Experimental ${engineLabel(engines.primaryId())} · unvalidated · v0.3 shadow comparator`;
 
   setStage("measure");
   updateStats();

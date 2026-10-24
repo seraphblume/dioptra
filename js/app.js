@@ -99,7 +99,7 @@
   function axisField(id, label, step = 1) {
     const options = Array.from({ length: Math.floor(180 / step) }, (_, i) => (i + 1) * step)
       .map(v => `<option value="${v}">${v}°</option>`).join("");
-    return `<select id="${id}" class="field" aria-label="${label}"><option value="">—</option>${options}</select>`;
+    return `<select id="${id}" class="field" aria-label="${label}"><option value="">—</option><option value="0" disabled>0°</option>${options}</select>`;
   }
 
   function buildArTables() {
@@ -206,6 +206,50 @@
     return Math.abs(n) === 0 ? 0 : -Math.abs(n);
   }
 
+  // Entry/notation only: neither prediction engine nor historical records are changed.
+  function syncRxAxis(prefix) {
+    const axis = $(`${prefix}Ax`);
+    const cylinder = parsed(`${prefix}Cyl`);
+    const optionalCylinder = /(?:Fin|Prev)$/.test(prefix);
+    const sphereOnly = cylinder === 0 ||
+      (optionalCylinder && cylinder == null && parsed(`${prefix}Sph`) != null);
+    axis.disabled = sphereOnly;
+    if (sphereOnly) {
+      axis.value = "0";
+      axis.classList.remove("invalid");
+      axis.title = "Axis is 0° when cylinder is 0.00 D.";
+    } else {
+      if (axis.value === "0") axis.value = "";
+      axis.removeAttribute("title");
+    }
+  }
+
+  function syncPinhole(suffix) {
+    const va = cfg.visualAcuity.find(v => v.snellen === $(`va${suffix}`).value);
+    const cancelled = Boolean(va && va.decimal >= 1);
+    const ph = $(`ph${suffix}`);
+    ph.disabled = cancelled;
+    ph.options[0].textContent = cancelled ? "Not needed · ≥20/20" : "—";
+    if (cancelled) ph.value = "";
+  }
+
+  function syncEntryRules() {
+    for (const eye of EYES) {
+      for (const row of [...AR_ROWS.map(r => r.id), "Prev", "Fin"]) syncRxAxis(`${eye.id}${row}`);
+      syncPinhole(eye.id === "od" ? "Od" : "Os");
+    }
+  }
+
+  function normalizePredictionNotation(prediction) {
+    if (!prediction) return;
+    for (const eye of EYES) {
+      const rx = prediction[eye.id];
+      for (const r of [rx, rx.raw, ...Object.values(rx.candidates || {})]) {
+        if (r && r.cylinder === 0) r.axis = 0;
+      }
+    }
+  }
+
   function setSignedField(id, value) {
     const el = $(id);
     if (!el || value == null || !Number.isFinite(Number(value))) return;
@@ -263,6 +307,7 @@
       setPlainField("pdNear", result.instrument.pdNearMm);
     }
     if (result.near && result.near.workingDistanceCm != null) setPlainField("nearWd", result.near.workingDistanceCm * 10);
+    syncEntryRules();
     document.querySelectorAll(".invalid").forEach(el => el.classList.remove("invalid"));
   }
 
@@ -326,7 +371,8 @@
 
   function validRx(r) {
     return [r.sphere, r.cylinder, r.axis].every(v => v != null && Number.isFinite(v)) &&
-      r.axis >= 1 && r.axis <= 180 && Math.abs(r.sphere) <= 30 && Math.abs(r.cylinder) <= 10;
+      (r.cylinder === 0 ? r.axis === 0 : r.axis >= 1 && r.axis <= 180) &&
+      Math.abs(r.sphere) <= 30 && Math.abs(r.cylinder) <= 10;
   }
 
   function readSymptoms() {
@@ -358,6 +404,7 @@
   }
 
   function readCase() {
+    syncEntryRules(); // Also excludes stale pinhole values at the save boundary.
     const errors = [];
     const invalid = new Set();
 
@@ -421,7 +468,7 @@
       for (const eye of EYES) {
         const p = `${eye.id}Prev`;
         const r = { sphere: signedValue(`${p}Sph`), cylinder: minusValue(`${p}Cyl`) ?? 0, axis: parsed(`${p}Ax`) };
-        if (r.cylinder === 0 && r.axis == null) r.axis = 180;
+        if (r.cylinder === 0) r.axis = 0;
         if (!validRx(r)) {
           [`${p}Sph`, `${p}Cyl`, `${p}Ax`].forEach(id => invalid.add(id));
           errors.push(`Enter the previous prescription for ${eye.short}.`);
@@ -458,6 +505,7 @@
   }
 
   function readActual() {
+    syncEntryRules();
     const errors = [];
     const invalid = new Set();
     const actual = {};
@@ -465,7 +513,7 @@
       const p = `${eye.id}Fin`;
       const r = { sphere: signedValue(`${p}Sph`), cylinder: minusValue(`${p}Cyl`), axis: parsed(`${p}Ax`) };
       if (r.cylinder === null && r.sphere != null) r.cylinder = 0;
-      if (r.cylinder === 0 && r.axis == null) r.axis = 180;
+      if (r.cylinder === 0) r.axis = 0;
       if (!validRx(r)) {
         [`${p}Sph`, `${p}Cyl`, `${p}Ax`].forEach(id => invalid.add(id));
         errors.push(`Enter your final Rx for the ${eye.name.toLowerCase()}.`);
@@ -519,6 +567,8 @@
     }
     try {
       state.run = engines.run(engineInput(input, observations));
+      normalizePredictionNotation(state.run.primary.prediction);
+      normalizePredictionNotation(state.run.shadow.prediction);
     } catch (err) {
       toast(err.message, true);
       return;
@@ -557,6 +607,7 @@
     const run = state.run;
     const record = {
       schema: "dioptra-case-2",
+      entryRevision: "zero-axis-pinhole-1",
       cohort: v03.cohort,
       caseId: state.input.caseId,
       savedAt: new Date().toISOString(),
@@ -598,6 +649,7 @@
     $("casePanel").querySelectorAll(".sign:not(.static)").forEach(b => { b.textContent = MINUS; });
     document.querySelectorAll(".invalid").forEach(el => el.classList.remove("invalid"));
     setSegment($("previousRxKnown"), "");
+    syncEntryRules();
     $("comparisonContent").innerHTML = "";
     $("kSection").open = false;
     $("scanStatusRow").hidden = true;
@@ -942,6 +994,10 @@
     });
 
     document.addEventListener("change", e => {
+      if (/^(od|os)(R[123]|Sel|Prev|Fin)(Sph|Cyl)$/.test(e.target.id)) {
+        syncRxAxis(e.target.id.replace(/(Sph|Cyl)$/, ""));
+      }
+      if (/^va(Od|Os)$/.test(e.target.id)) syncPinhole(e.target.id.slice(2));
       const chip = e.target.closest(".chip");
       if (chip) chip.classList.toggle("on", e.target.checked);
       (e.target.closest(".power") || e.target).classList.remove("invalid");
@@ -986,6 +1042,7 @@
   buildKeratometry();
   buildChips();
   populateSelects();
+  syncEntryRules();
   bindControls();
   setSegment($("previousRxKnown"), "");
   setCaseId(newCaseId());

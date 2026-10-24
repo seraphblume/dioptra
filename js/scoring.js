@@ -115,5 +115,21 @@
     };
   }
 
-  window.DioptraScoring = { AXIS_TOLERANCE, axisTolerance, axisDistance, scoreEye, summarize };
+  // A transparent post-exam tolerance count, NOT calibrated clinical confidence.
+  function agreementCase(prediction, actual) {
+    const eyes = ["od", "os"];
+    if (eyes.some(eye => [prediction && prediction[eye], actual && actual[eye]].some(rx =>
+      !rx || ![rx.sphere, rx.cylinder, rx.axis].every(Number.isFinite)))) return null;
+    const checks = [];
+    for (const eye of eyes) {
+      const s = scoreEye(prediction[eye], actual[eye]);
+      checks.push({ eye, component: "sphere", difference: s.sphereError, tolerance: 0.25, pass: s.within025Sphere });
+      checks.push({ eye, component: "cylinder", difference: s.cylinderError, tolerance: 0.25, pass: s.within025Cylinder });
+      if (s.axisApplicable) checks.push({ eye, component: "axis", difference: s.axisError, tolerance: s.axisTolerance, pass: s.axisWithinTolerance });
+    }
+    const passed = checks.filter(c => c.pass).length;
+    return { version: "rx-agreement-1", percent: Math.round(100 * passed / checks.length), passed, total: checks.length, checks };
+  }
+
+  window.DioptraScoring = { AXIS_TOLERANCE, axisTolerance, axisDistance, scoreEye, summarize, agreementCase };
 })();

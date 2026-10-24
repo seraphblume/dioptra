@@ -8,7 +8,8 @@
 //
 // The engine reads the frozen v0.2 ADD table from js/config.js but never modifies it.
 (function () {
-  const cfg = window.DIOPTRA_V03_CONFIG;
+  // Instantiate immutable configuration closures; no temporary global overrides.
+  function createEngine(cfg) {
   const baseCfg = window.DIOPTRA_CONFIG;
   const EPS = 1e-9;
 
@@ -429,7 +430,7 @@
       : all.some(f => f.level === "review") ? "review" : "supported";
 
     return {
-      engine: "v0.3",
+      engine: cfg.engine || "v0.3",
       version: cfg.version,
       mode: cfg.mode,
       lockedAt: new Date().toISOString(),
@@ -447,7 +448,7 @@
     };
   }
 
-  window.DioptraEngineV03 = {
+  return {
     version: cfg.version,
     predictCase,
     // exposed for tests, scoring and the fitting tool
@@ -470,4 +471,7 @@
     tableAdd,
     predictAdd
   };
+  }
+  window.DioptraEngineFactory = createEngine;
+  window.DioptraEngineV03 = createEngine(window.DIOPTRA_V03_CONFIG);
 })();

@@ -131,7 +131,7 @@ const server = http.createServer(async (req, res) => {
     const csv = await page.evaluate(() => DioptraStorage.toShadowCSV(DioptraStorage.listCases()));
     const rows = csv.split("\n").map(r => r.split(","));
     const recordRow = rows.find(r => r[0] === c.caseId && r[4] === "v0.3" && r[5] === "od");
-    for (const [field, value] of Object.entries({ near_wd_mm: "330", near_point_mm: "500", previous_sph: "1", previous_cyl: "0", previous_axis: "180", previous_add: "1.25", cohort: "v0.3-candidate-1", record_schema: "dioptra-case-2" })) {
+    for (const [field, value] of Object.entries({ near_wd_mm: "330", near_point_mm: "500", previous_sph: "1", previous_cyl: "0", previous_axis: "0", previous_add: "1.25", cohort: "v0.3-candidate-1", record_schema: "dioptra-case-2" })) {
       assert.equal(recordRow[rows[0].indexOf(field)], value, field);
     }
 
@@ -237,8 +237,38 @@ const server = http.createServer(async (req, res) => {
     for (const eye of ["od", "os"]) {
       await page.locator(`#${eye}SelSph`).selectOption("1.00");
       await page.locator(`#${eye}SelCyl`).selectOption("0.00");
-      await page.locator(`#${eye}SelAx`).selectOption("180");
+      assert.equal(await page.locator(`#${eye}SelAx`).inputValue(), "0");
+      assert.equal(await page.locator(`#${eye}SelAx`).isDisabled(), true);
     }
+    // Axis transitions never leave a meaningless 0° on a nonzero cylinder.
+    await page.locator("#odSelCyl").selectOption("0.25");
+    assert.equal(await page.locator("#odSelAx").isEnabled(), true);
+    assert.equal(await page.locator("#odSelAx").inputValue(), "");
+    await page.locator("#primaryAction").click();
+    assert.equal(await page.locator("body").getAttribute("data-stage"), "measure");
+    await page.locator("#odSelAx").selectOption("180");
+    await page.locator("#odSelCyl").selectOption("0.00");
+    assert.equal(await page.locator("#odSelAx").inputValue(), "0");
+    await page.locator("#odSelCyl").selectOption("");
+    assert.equal(await page.locator("#odSelAx").isEnabled(), true);
+    assert.equal(await page.locator("#odSelAx").inputValue(), "");
+    await page.locator("#odSelCyl").selectOption("0.00");
+    for (const suffix of ["Od", "Os"]) {
+      await page.locator(`#va${suffix}`).selectOption("20/40");
+      await page.locator(`#ph${suffix}`).selectOption("20/25");
+      await page.locator(`#va${suffix}`).selectOption("20/20");
+      assert.equal(await page.locator(`#ph${suffix}`).inputValue(), "");
+      assert.equal(await page.locator(`#ph${suffix}`).isDisabled(), true);
+      await page.locator(`#va${suffix}`).selectOption("20/15");
+      assert.equal(await page.locator(`#ph${suffix}`).isDisabled(), true);
+      await page.locator(`#va${suffix}`).selectOption("");
+      assert.equal(await page.locator(`#ph${suffix}`).isEnabled(), true);
+      assert.equal(await page.locator(`#ph${suffix}`).inputValue(), "");
+      await page.locator(`#va${suffix}`).selectOption("20/40");
+      await page.locator(`#ph${suffix}`).selectOption("20/20");
+    }
+    await page.locator("#vaOd").selectOption("20/20");
+    assert.equal(await page.locator("#phOs").inputValue(), "20/20", "VA rule is per eye");
     for (const colorScheme of ["light", "dark"]) {
       await page.emulateMedia({ colorScheme });
       for (const width of [320, 390, 1280]) {
@@ -255,6 +285,50 @@ const server = http.createServer(async (req, res) => {
     await page.locator("#caseTab").click();
     assert.equal(await page.locator("body").getAttribute("data-stage"), "refract");
     assert.equal(await page.locator("#comparisonContent").innerHTML(), "", "tab switch never reveals the locked prediction");
+    for (const eye of ["od", "os"]) {
+      await page.locator(`#${eye}FinSph`).selectOption("1.00");
+      assert.equal(await page.locator(`#${eye}FinAx`).inputValue(), "0", "blank optional cylinder means sphere only");
+      await page.locator(`#${eye}FinCyl`).selectOption("0.25");
+      assert.equal(await page.locator(`#${eye}FinAx`).isEnabled(), true);
+      await page.locator(`#${eye}FinAx`).selectOption("90");
+      await page.locator(`#${eye}FinCyl`).selectOption("0.00");
+      assert.equal(await page.locator(`#${eye}FinAx`).inputValue(), "0");
+    }
+    await page.locator("#primaryAction").click();
+    assert.equal(await page.locator("body").getAttribute("data-stage"), "compare");
+    await page.locator("#primaryAction").click();
+    const zeroCase = await page.evaluate(() => DioptraStorage.listCases().at(-1));
+    assert.equal(zeroCase.entryRevision, "zero-axis-pinhole-1");
+    assert.equal(zeroCase.input.od.pinhole, "");
+    assert.equal(zeroCase.input.os.pinhole, "20/20");
+    for (const eye of ["od", "os"]) {
+      for (const rx of [zeroCase.input[eye], zeroCase.actual[eye], zeroCase.prediction[eye], zeroCase.shadow.prediction[eye], ...Object.values(zeroCase.prediction[eye].candidates)]) {
+        assert.equal(rx.axis, 0);
+      }
+      assert.equal(await page.locator(`#${eye}SelAx`).isEnabled(), true);
+      assert.equal(await page.locator(`#${eye}SelAx`).inputValue(), "");
+    }
+    assert.equal(await page.locator("#phOd").isEnabled(), true);
+    assert.equal(await page.evaluate(() => JSON.stringify(DioptraStorage.listCases()[0])), historical);
+    const zeroCSV = await page.evaluate(() => DioptraStorage.toShadowCSV([DioptraStorage.listCases().at(-1)]));
+    const zeroRows = zeroCSV.split("\n").map(r => r.split(","));
+    for (const row of zeroRows.slice(1).filter(r => r.length > 1)) {
+      for (const field of ["ar_sel_axis", "pred_axis", "final_axis"]) assert.equal(row[zeroRows[0].indexOf(field)], "0");
+      assert.equal(row[zeroRows[0].indexOf("axis_error")], "", "sphere-only axis is not scored");
+    }
+    // Scanner imports obey the same rule, including repeated readings.
+    await page.evaluate(() => {
+      DioptraTicketScan.scanImage = async () => DioptraTicketScan.parseTicketText("<R>\n+0.25 -0.00 180 9\n<+0.25 -0.00 180>\n<L>\n+0.25 -0.25 115 9\n<+0.25 -0.25 115>");
+    });
+    await page.locator("#ticketImageInput").setInputFiles({ name: "zero.png", mimeType: "image/png", buffer: Buffer.from("stubbed OCR") });
+    await page.locator("#scanStatus").filter({ hasText: /Imported/ }).waitFor();
+    for (const prefix of ["odR1", "odSel"]) {
+      assert.equal(await page.locator(`#${prefix}Ax`).inputValue(), "0");
+      assert.equal(await page.locator(`#${prefix}Ax`).isDisabled(), true);
+    }
+    assert.equal(await page.locator("#osSelAx").inputValue(), "115");
+    assert.equal(await page.locator("#osSelAx").isEnabled(), true);
+    assert.equal(await page.locator("#odR2Ax").inputValue(), "", "unused repeat stays empty");
     assert.deepEqual(errors, []);
     console.log("PASS: candidate form, cohort isolation, previous Rx, mm conversion, exports, scan import, calculators, tab isolation, keyboard navigation, light/dark mobile layouts");
   } finally {

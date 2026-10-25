@@ -16,29 +16,31 @@ const eye = (sphere = -2, cylinder = -1, axis = 90) => ({ sphere, cylinder, axis
 const input = age => ({ age, instrument: { vertexMm: 12 }, od: eye(), os: eye() });
 const withoutTime = p => { const copy = JSON.parse(JSON.stringify(p)); delete copy.lockedAt; return copy; };
 
-// Golden digest from the pre-RC engine at d0ab3aa. Covers full outputs, not just powers.
-// BASELINE_ENGINE is an audit-only optional path for independently regenerating the digest.
-const reference = load([...baseFiles, process.env.BASELINE_ENGINE || "js/engine-v03.js"]);
-const goldenCases = [];
+// Compare against archived d0ab3aa source in the SAME runtime: trig floating-point
+// bytes can vary across Node/CPU versions. Keep exact full-output equality, not a
+// platform-specific output hash or a tolerance that could hide a changed rule.
+for (const [file, hash] of [
+  ["tests/fixtures/v0.3-pre-rc.js", "aed15f0c06ac5ec76fbbec974515ceb0507304295ff7efaebaeacc6f39c00ef6"],
+  ["js/config-v03.js", "a434f2728c51d1c0c9ed4437aade612f3467e35b7f266681a5250e2056bb52eb"]
+]) assert.equal(crypto.createHash("sha256").update(fs.readFileSync(path.join(root, file))).digest("hex"), hash, `Frozen reference changed: ${file}`);
+const reference = load([...baseFiles, "tests/fixtures/v0.3-pre-rc.js"]);
 for (let i = 0; i < 500; i++) {
   const od = eye((i % 85 - 60) / 4, -(i % 17) / 4, i % 180 + 1);
   const os = eye((i % 63 - 45) / 4, -(i % 13) / 4, (i * 7) % 180 + 1);
-  goldenCases.push(withoutTime(reference.DioptraEngineV03.predictCase({
+  const example = {
     age: i % 80 + 5,
     instrument: i % 5 ? { vertexMm: 8 + i % 8 } : {},
     near: i % 3 ? { workingDistanceCm: 33 + i % 12, nearPointCm: 15 + i % 40 } : {},
     od: { ...od, va: "20/40", pinhole: i % 2 ? "20/40" : "20/20", readings: i % 4 ? [od, { ...od, sphere: od.sphere - .25 }, { ...od, axis: od.axis % 180 + 1 }] : [] },
     os: { ...os, readings: [os, os, os] }
-  })));
+  };
+  assert.deepEqual(withoutTime(w.DioptraEngineV03.predictCase(example)), withoutTime(reference.DioptraEngineV03.predictCase(example)), `Baseline parity case ${i}`);
 }
-const digest = crypto.createHash("sha256").update(JSON.stringify(goldenCases)).digest("hex");
-if (process.env.BASELINE_ENGINE) console.log("Baseline digest:", digest);
-else assert.equal(digest, "7142af92901f66325fc2b70aff22371cf4dbee06aefb50684c5606f0e089d6d8", "v0.3 baseline must remain byte-equivalent after removing timestamps");
 
 const configBefore = JSON.stringify(w.DIOPTRA_V03_CONFIG);
 assert.equal(w.DIOPTRA_V04_CONFIG.sphereOffsets.myopiaEmmetropia.under40, -.50);
 assert.equal(w.DIOPTRA_V04_CONFIG.sphereOffsets.myopiaEmmetropia["40plus"], -.30);
-for (const age of [9, 17, 18, 39, 40, 75]) {
+for (const age of [9, 17, 17.9, 18, 39, 39.9, 40, 75]) {
   const run = w.DioptraEngines.run(input(age));
   assert.equal(run.primary.id, "v0.4");
   assert.equal(run.primary.prediction.version, "0.4.0-rc.1");

@@ -11,7 +11,7 @@
     version: "0.4.0-rc.1",
     mode: "active",
     cohort: "v0.4-rc1-prospective",
-    ageBands: [{ id: "under18", maxAge: 17 }, { id: "under40", maxAge: 39 }, { id: "40plus", maxAge: 200 }],
+    ageBands: [{ id: "under18", maxAge: 18, exclusive: true }, { id: "under40", maxAge: 40, exclusive: true }, { id: "40plus", maxAge: 200 }],
     sphereOffsets: {
       myopiaEmmetropia: { under18: -0.25, under40: bounded(shrunk(-38.5, 74)), "40plus": bounded(shrunk(-7.75, 30)) },
       lowHyperopia: { under18: -0.25, under40: -0.25, "40plus": -0.25 },

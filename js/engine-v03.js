@@ -144,7 +144,7 @@
   function ageBand(age) {
     const a = num(age);
     if (a == null) return null;
-    const band = cfg.ageBands.find(b => a <= b.maxAge);
+    const band = cfg.ageBands.find(b => b.exclusive ? a < b.maxAge : a <= b.maxAge);
     return band ? band.id : cfg.ageBands[cfg.ageBands.length - 1].id;
   }
 

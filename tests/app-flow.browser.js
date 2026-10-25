@@ -98,6 +98,7 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, "mobile has no horizontal overflow");
     if (process.env.DIOPTRA_SCREENSHOT_DIR) {
       await fs.mkdir(process.env.DIOPTRA_SCREENSHOT_DIR, { recursive: true });
+      await page.waitForFunction(() => !document.querySelector("#toast").classList.contains("show"));
       await page.evaluate(() => scrollTo(0, 0));
       await page.screenshot({ path: path.join(process.env.DIOPTRA_SCREENSHOT_DIR, "dioptra-candidate-mobile.png"), fullPage: true });
     }
@@ -119,7 +120,10 @@ const server = http.createServer(async (req, res) => {
       await page.setViewportSize({ width, height: 900 });
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `RC agreement overflows at ${width}`);
       if (process.env.DIOPTRA_SCREENSHOT_DIR && width !== 320) {
-        await page.locator("#agreementScore").scrollIntoViewIfNeeded();
+        await page.locator("#compareSection").evaluate(el => el.scrollIntoView({ behavior: "instant", block: "start" }));
+        const scoreBox = await page.locator("#agreementScore").boundingBox();
+        const navBox = await page.locator("#navbar").boundingBox();
+        assert.ok(scoreBox.y >= navBox.y + navBox.height, "agreement must not hide under the fixed header");
         await page.screenshot({ path: path.join(process.env.DIOPTRA_SCREENSHOT_DIR, `rc-agreement-${width}.png`) });
       }
     }

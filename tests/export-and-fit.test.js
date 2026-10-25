@@ -13,7 +13,7 @@ const { spawnSync } = require("node:child_process");
 const root = path.resolve(__dirname, "..");
 const sandbox = { window: {} };
 vm.createContext(sandbox);
-for (const f of ["js/config.js", "js/algorithm.js", "js/config-v03.js", "js/engine-v03.js", "js/scoring.js", "js/engines.js", "js/storage.js"]) {
+for (const f of ["js/config.js", "js/algorithm.js", "js/config-v03.js", "js/engine-v03.js", "js/config-v04.js", "js/engine-v04.js", "js/scoring.js", "js/engines.js", "js/storage.js"]) {
   vm.runInContext(fs.readFileSync(path.join(root, f), "utf8"), sandbox, { filename: f });
 }
 const w = sandbox.window;
@@ -36,12 +36,16 @@ function buildCases(mode) {
       return m <= 0.5 && age < 40 ? -0.5 : m > 2 ? 0.25 : 0;
     };
     const input = { caseId: `S${i}`, age, od: { ...od, va: "", pinhole: "" }, os: { ...os, va: "", pinhole: "" } };
-    const run = w.DioptraEngines.run({
+    const rich = {
       ...input,
       instrument: { vertexMm: 12 },
       od: { ...input.od, readings: [od, { ...od, sphere: od.sphere - 0.25 }, od] },
       os: { ...input.os, readings: [os, os, os] }
-    });
+    };
+    const run = mode === "shadow" ? {
+      primary: { prediction: w.DioptraAlgorithm.predictCase(rich) },
+      shadow: { prediction: w.DioptraEngineV03.predictCase(rich) }
+    } : w.DioptraEngines.run(rich);
     const final = e => ({ sphere: q(e.sphere + clinician(e)), cylinder: e.cylinder, axis: Math.round(e.axis / 5) * 5 || 180 });
     const actual = { od: final(od), os: final(os), add: null, note: "" };
     const prediction = run.primary.prediction;
@@ -68,7 +72,7 @@ assert.equal(w.DioptraStorage.toCSV(cases).split("\n")[0], STUDY_HEADER);
 // Shadow CSV: case x eye x variant.
 const shadowCsv = w.DioptraStorage.toShadowCSV(cases);
 const lines = shadowCsv.trim().split("\n");
-assert.equal(lines.length - 1, 60 * 2 * 5, "primary + shadow + three v0.3 estimators per eye");
+assert.equal(lines.length - 1, 60 * 2 * 8, "primary + shadow + three estimators for each engine per eye");
 assert.ok(lines[0].includes("axis_within_tolerance"));
 assert.ok(lines[0].includes("ar_centre_m"));
 const shadowFile = path.join(tmp, "shadow.csv");

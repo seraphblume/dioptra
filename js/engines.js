@@ -1,32 +1,29 @@
 // Project Dioptra — engine registry.
 //
-// Decides which engine produces the locked study prediction ("primary") and which runs
-// alongside it ("shadow"). While DIOPTRA_V03_CONFIG.mode is "shadow", the frozen v0.2
-// predictor stays primary and Cohort B remains comparable.
+// v0.4 RC is primary; v0.3 is the fixed shadow comparator. v0.2 is retired
+// from new runs. Legacy helpers/records remain available for historical exports.
 (function () {
-  const v03cfg = window.DIOPTRA_V03_CONFIG;
-
   const ENGINES = {
-    "v0.2": {
-      id: "v0.2",
-      label: "v0.2",
-      version: () => window.DIOPTRA_CONFIG.version,
-      predictCase: input => window.DioptraAlgorithm.predictCase(input)
+    "v0.4": {
+      id: "v0.4",
+      label: "v0.4 RC",
+      version: () => window.DIOPTRA_V04_CONFIG.version,
+      predictCase: input => window.DioptraEngineV04.predictCase(input)
     },
     "v0.3": {
       id: "v0.3",
       label: "v0.3",
-      version: () => v03cfg.version,
+      version: () => window.DIOPTRA_V03_CONFIG.version,
       predictCase: input => window.DioptraEngineV03.predictCase(input)
     }
   };
 
   function primaryId() {
-    return v03cfg.mode === "active" ? "v0.3" : "v0.2";
+    return "v0.4";
   }
 
   function shadowId() {
-    return primaryId() === "v0.3" ? "v0.2" : "v0.3";
+    return "v0.3";
   }
 
   // The primary engine must succeed; a shadow failure is recorded and never blocks the case.

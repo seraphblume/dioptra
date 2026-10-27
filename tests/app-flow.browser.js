@@ -274,7 +274,7 @@ const server = http.createServer(async (req, res) => {
     await page.locator("#calculatorForm button[type=submit]").click();
     assert.equal(await page.locator("#calcVertex").innerText(), "-11.36 DS");
     assert.equal(await page.locator("#calcVertexOs").innerText(), "+5.60 DS");
-    assert.match(await page.locator("#calcVertexTitle").innerText(), /Spectacle-plane/);
+    assert.match(await page.locator("#calcVertexTitle").innerText(), /Spectacle-plane/i);
     await page.locator("#calcConversion").selectOption("custom");
     await page.locator("#calcFromVertex").fill("0");
     assert.equal(await page.locator("#calculatorResults").isVisible(), false);

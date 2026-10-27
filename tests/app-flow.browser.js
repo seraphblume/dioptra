@@ -255,8 +255,12 @@ const server = http.createServer(async (req, res) => {
     await page.locator("#calculatorForm button[type=submit]").click();
     assert.equal(await page.locator("#calcVertex").innerText(), "-8.93 DS");
     assert.match(await page.locator("#calcVertexPlanes").innerText(), /12 mm → 0 mm/);
+    assert.match(await page.locator("#vertexAlreadyHint").innerText(), /do not apply it a second time/);
     await page.locator("#calcFromVertex").fill("0");
     assert.equal(await page.locator("#calculatorResults").isVisible(), false);
+    await page.locator("#calculatorForm button[type=submit]").click();
+    assert.equal(await page.locator("#calcVertex").innerText(), "-10.00 DS");
+    assert.match(await page.locator("#calcVertexContext").innerText(), /no vertex compensation applied/);
     await page.locator("#calcToVertex").fill("12");
     await page.locator("#calculatorForm button[type=submit]").click();
     assert.equal(await page.locator("#calcVertex").innerText(), "-11.36 DS");

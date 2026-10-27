@@ -11,7 +11,7 @@ const root = path.resolve(__dirname, "..");
 function load(overrides) {
   const sandbox = { window: {} };
   vm.createContext(sandbox);
-  for (const file of ["js/config.js", "js/algorithm.js", "js/config-v03.js"]) {
+  for (const file of ["js/vertex.js", "js/config.js", "js/algorithm.js", "js/config-v03.js"]) {
     vm.runInContext(fs.readFileSync(path.join(root, file), "utf8"), sandbox, { filename: file });
   }
   if (overrides) overrides(sandbox.window.DIOPTRA_V03_CONFIG);
@@ -142,6 +142,7 @@ test("unstable readings raise review flags without changing dioptric logic", () 
 });
 
 test("vertex conversion works per principal meridian", () => {
+  assert.equal(e.convertVertex, w.DioptraVertex.convertVertex, "engine uses shared calculator optics");
   near(e.effectivePower(-8, 0, 12), -8.8496, 1e-3, "corneal -8.00 at 12 mm");
   near(e.effectivePower(-10, 12, 0), -8.9286, 1e-3, "spectacle -10.00 at the cornea");
   const rx = e.convertVertex({ sphere: -6, cylinder: -2, axis: 180 }, 0, 12);

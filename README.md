@@ -127,3 +127,5 @@ With Playwright and Chromium installed, `node tests/app-flow.browser.js` tests t
 - [v0.3 design notes](docs/v0.3-design-notes.md)
 - [v0.3 data collection](docs/data-collection-v0.3.md) and [schema](docs/data-collection-v0.3.schema.json)
 - [v0.2 freeze contract](docs/v0.2-freeze.md)
+
+Vertex compensation is shared between Calculators and the refraction engines. See [vertex distance and source notes](docs/vertex-distance.md) for plane conventions, the 12 mm reference table and precision.

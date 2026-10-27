@@ -47,6 +47,9 @@
     $("calcAxis").value = rx.axis ?? "";
   }
   function show(next) {
+    const from = $("calcFromVertex").value.trim().replace(",", ".");
+    const to = $("calcToVertex").value.trim().replace(",", ".");
+    const converted = optics.convertVertex(next.original, from, to);
     result = next;
     const { original: o, transposed: t, se } = next;
     const f = optics.formatPower;
@@ -57,8 +60,14 @@
     $("calcOriginal").textContent = optics.formatRx(o);
     $("calcTransposed").textContent = optics.formatRx(t);
     $("calcNotation").textContent = t.cylinder === 0 ? "Sphere only · axis not applicable" : t.cylinder < 0 ? "Minus-cylinder notation" : "Plus-cylinder notation";
+    $("calcVertex").textContent = optics.formatRx({ ...converted,
+      sphere: Math.round(converted.sphere * 100) / 100,
+      cylinder: Math.round(converted.cylinder * 100) / 100 });
+    $("calcVertexPlanes").textContent = `${Number(from)} mm → ${Number(to)} mm from cornea`;
+    $("calcVertexMeridians").textContent = `Principal powers: ${converted.sphere.toFixed(2)} D / ${(converted.sphere + converted.cylinder).toFixed(2)} D`;
     $("calcSE").textContent = `${f(next.roundedSE)} D`;
     const rows = [
+      ["Vertex formula (each meridian)", "F₂ = F₁ / [1 − ((source mm − target mm) / 1000) × F₁]"],
       ["Sphere + cylinder", `${f(o.sphere)} + (${f(o.cylinder)}) = ${f(t.sphere)} D`],
       ["Reverse cylinder sign", `${f(o.cylinder)} → ${f(t.cylinder)} D`],
       ["Rotate axis by 90°", o.axis === null ? "Not applicable to a spherical lens" : `${o.axis}° → ${t.axis}°`],
@@ -80,7 +89,7 @@
     try { show(optics.calculate($("calcSphere").value, $("calcCylinder").value, $("calcAxis").value)); }
     catch (error) { $("calculatorError").textContent = error.message; }
   });
-  ["calcSphere", "calcCylinder", "calcAxis"].forEach(id => $(id).addEventListener("input", invalidate));
+  ["calcSphere", "calcCylinder", "calcAxis", "calcFromVertex", "calcToVertex"].forEach(id => $(id).addEventListener("input", invalidate));
   $("calculatorPasteForm").addEventListener("submit", event => {
     event.preventDefault();
     $("calculatorPasteError").textContent = "";

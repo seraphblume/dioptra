@@ -10,7 +10,7 @@ function load(files) {
   for (const f of files) vm.runInContext(fs.readFileSync(path.resolve(root, f), "utf8"), context, { filename: f });
   return context.window;
 }
-const baseFiles = ["js/config.js", "js/algorithm.js", "js/config-v03.js"];
+const baseFiles = ["js/vertex.js", "js/config.js", "js/algorithm.js", "js/config-v03.js"];
 const w = load([...baseFiles, "js/engine-v03.js", "js/config-v04.js", "js/engine-v04.js", "js/scoring.js", "js/engines.js", "js/storage.js"]);
 const eye = (sphere = -2, cylinder = -1, axis = 90) => ({ sphere, cylinder, axis });
 const input = age => ({ age, instrument: { vertexMm: 12 }, od: eye(), os: eye() });

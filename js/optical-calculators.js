@@ -60,7 +60,8 @@
     if (rx.cylinder === 0) return `${formatPower(rx.sphere)} DS`;
     return `${formatPower(rx.sphere)} ${formatPower(rx.cylinder)} × ${String(rx.axis).padStart(3, "0")}°`;
   }
-  const api = Object.freeze({ calculate, parse, formatPower, formatRx });
+  const vertex = typeof module === "object" && module.exports ? require("./vertex.js") : root.DioptraVertex;
+  const api = Object.freeze({ calculate, parse, formatPower, formatRx, ...vertex });
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.DioptraOptics = api;
-})(typeof globalThis !== "undefined" ? globalThis : this);
+})(typeof window !== "undefined" ? window : globalThis);

@@ -138,7 +138,7 @@
           <span class="row-value"><input id="nearPoint" class="row-input num" type="text" inputmode="decimal" placeholder="—" aria-label="Near point in mm" /><span class="unit">mm</span></span>
         </label>
       </div>
-      <p class="group-footer">Enter the VD used for the autorefractor’s reported powers (0–25 mm; blank assumes 12 mm). The algorithm estimates a spectacle Rx at 12 mm; this field only normalizes the AR readings to that plane. Use Calculators for spectacle ↔ contact lens conversion. Near fields are optional and only feed the ADD estimate. Near point is the push-up blur point, measured through the distance correction.</p>
+      <p class="group-footer">Spectacles and phoropters commonly use 12–14 mm. Enter the VD used for the autorefractor’s reported powers (0–25 mm; blank assumes 12 mm). The algorithm estimates a spectacle Rx at 12 mm; this field only normalizes the AR readings to that plane. Use Calculators for spectacle ↔ contact lens conversion. Near fields are optional and only feed the ADD estimate. Near point is the push-up blur point, measured through the distance correction.</p>
 
       <details class="group disclosure" id="kSection">
         <summary class="row disclosure-row"><span class="row-label">Keratometry</span><span class="row-detail">Optional</span></summary>
@@ -236,7 +236,7 @@
           <label for="calcFromVertex"><span id="calcFromLabel">Spectacle vertex</span><span>mm from cornea</span><input id="calcFromVertex" type="text" inputmode="decimal" value="12" aria-describedby="calculatorError vertexHint vertexAlreadyHint" /></label>
           <label for="calcToVertex"><span id="calcToLabel">Contact lens plane</span><span>mm from cornea</span><input id="calcToVertex" type="text" inputmode="decimal" value="0" readonly aria-describedby="calculatorError vertexHint vertexAlreadyHint" /></label>
         </div>
-        <p id="vertexHint" class="calculator-hint">Use the measured spectacle vertex when known; 12 mm is the default. Contacts use 0 mm. The distances apply to both eyes.</p>
+        <p id="vertexHint" class="calculator-hint">Spectacles and phoropters commonly use 12–14 mm. Enter the measured or reported vertex when known; 12 mm is only the default assumption. Contacts use 0 mm. The distances apply to both eyes.</p>
         <p id="vertexAlreadyHint" class="calculator-hint">Manufacturer trial-lens tables may already include compensation; do not apply it a second time. Enter a power in the plane selected above.</p>
         <p id="calculatorError" class="calculator-error" role="status" aria-live="polite"></p><button class="button-primary" type="submit">Calculate</button>
       </form>

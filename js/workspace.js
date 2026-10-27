@@ -63,6 +63,9 @@
     $("calcVertex").textContent = optics.formatRx({ ...converted,
       sphere: Math.round(converted.sphere * 100) / 100,
       cylinder: Math.round(converted.cylinder * 100) / 100 });
+    $("calcVertexContext").textContent = Number(from) === Number(to)
+      ? "Same source and target plane: no vertex compensation applied."
+      : "Compensation applied once from the entered source plane. Confirm that the input has not already been converted to the target plane.";
     $("calcVertexPlanes").textContent = `${Number(from)} mm → ${Number(to)} mm from cornea`;
     $("calcVertexMeridians").textContent = `Principal powers: ${converted.sphere.toFixed(2)} D / ${(converted.sphere + converted.cylinder).toFixed(2)} D`;
     $("calcSE").textContent = `${f(next.roundedSE)} D`;

@@ -228,10 +228,11 @@
             <label for="calcAxis">Axis <span>1–180°</span><input id="calcAxis" type="text" inputmode="numeric" autocomplete="off" placeholder="90" aria-describedby="calculatorError axisHint" /></label>
           </div>
           <div class="calculator-fields">
-            <label for="calcFromVertex">Source vertex <span>mm from cornea</span><input id="calcFromVertex" type="text" inputmode="decimal" value="12" aria-describedby="calculatorError vertexHint" /></label>
-            <label for="calcToVertex">Target vertex <span>mm from cornea</span><input id="calcToVertex" type="text" inputmode="decimal" value="0" aria-describedby="calculatorError vertexHint" /></label>
+            <label for="calcFromVertex">Source vertex <span>mm from cornea</span><input id="calcFromVertex" type="text" inputmode="decimal" value="12" aria-describedby="calculatorError vertexHint vertexAlreadyHint" /></label>
+            <label for="calcToVertex">Target vertex <span>mm from cornea</span><input id="calcToVertex" type="text" inputmode="decimal" value="0" aria-describedby="calculatorError vertexHint vertexAlreadyHint" /></label>
           </div>
-          <p id="vertexHint" class="calculator-hint">12 → 0 mm matches the reference table: spectacles to corneal plane. Reverse the distances for the inverse conversion. Use measured distances when known.</p>
+          <p id="vertexHint" class="calculator-hint">12 → 0 mm matches the reference table: spectacles to corneal plane. Reverse the distances for the inverse conversion. Use measured distances when known. Source means the plane where the entered power is currently expressed.</p>
+          <p id="vertexAlreadyHint" class="calculator-hint">Already compensated? Enter its current plane as the source (0 mm for a corneal-plane power). Manufacturer trial-lens tables may already include vertex compensation; do not apply it a second time.</p>
           <p id="axisHint" class="calculator-hint">For sphere only, enter 0 cylinder; no axis is needed.</p>
           <p id="calculatorError" class="calculator-error" role="status" aria-live="polite"></p>
           <button class="button-primary" type="submit">Calculate</button>
@@ -265,8 +266,9 @@
             <p class="eyebrow">03 / Vertex compensation</p>
             <h2 id="calcVertex"></h2>
             <p id="calcVertexPlanes" class="calculator-hint"></p>
+            <p id="calcVertexContext" class="calculator-hint"></p>
             <p id="calcVertexMeridians" class="calculator-hint"></p>
-            <p class="calculator-hint">Calculated powers shown to 0.01 D, before selection of available lens powers. Both principal meridians are converted; axis stays unchanged. This is an optical equivalent, not a contact lens fitting recommendation.</p>
+            <p class="calculator-hint">Calculated powers shown to 0.01 D, before selection of available lens powers. Both principal meridians are converted; axis stays unchanged. The ±4.00 D fitting guideline applies to either principal meridian; mathematical compensation also exists below that level. This is an optical equivalent, not a contact lens fitting recommendation.</p>
           </div>
           <details class="calculation-details">
             <summary>How it’s calculated</summary>

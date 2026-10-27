@@ -58,12 +58,20 @@ console.log("Optical calculators: examples, 4,500 round trips, exact SE, boundar
 
 const vertex = require("../js/vertex.js");
 const close = (a, b, tolerance = 1e-10) => assert.ok(Math.abs(a - b) <= tolerance, `${a} vs ${b}`);
-// Independently calculated exact 12 mm examples, and the photographed table's coarse values.
-close(vertex.effectivePower(-10, 12, 0), -8.928571428571429);
-close(vertex.effectivePower(10, 12, 0), 11.363636363636363);
-for (const [spectacle, corneal] of [[-4, -3.87], [-7.62, -7], [-10, -9], [-20.37, -16.37]]) {
-  close(vertex.effectivePower(spectacle, 12, 0), corneal, .13);
+// Exact reference values derived independently from the 12 mm rational relationship.
+// Printed fitting charts can include coarse rounding or errors; they are not golden outputs.
+for (const [power, expected] of [[-10, -125 / 14], [10, 125 / 11],
+  [-18, -1125 / 76], [18, 1125 / 49], [-20.25, -20250 / 1243]]) {
+  close(vertex.effectivePower(power, 12, 0), expected);
 }
+// There is no mathematical cutoff at 4 D, including when only the second meridian exceeds it.
+close(vertex.effectivePower(3.75, 12, 0), 750 / 191);
+const cross = vertex.convertVertex({ sphere: -3, cylinder: -2, axis: 90 }, 12, 0);
+close(cross.sphere, -750 / 259);
+close(cross.sphere + cross.cylinder, -250 / 53);
+// A power already at the target plane must pass through unchanged, even after an earlier conversion.
+const once = vertex.convertVertex({ sphere: -8, cylinder: -2, axis: 180 }, 12, 0);
+assert.deepEqual(vertex.convertVertex(once, 0, 0), once);
 for (const sphere of [-20, -8, 0, 4, 12]) for (const cylinder of [-4, 0, 2]) {
   const rx = { sphere, cylinder, axis: cylinder ? 73 : null };
   const converted = vertex.convertVertex(rx, 12, 0);
@@ -82,4 +90,4 @@ assert.throws(() => vertex.effectivePower(100, 12, 0), /focal plane/);
 assert.throws(() => vertex.effectivePower(Infinity, 12, 0));
 assert.throws(() => vertex.convertVertex({sphere: 0, cylinder: NaN}, 12, 12));
 assert.equal(require("../js/optical-calculators.js").convertVertex, vertex.convertVertex);
-console.log("PASS: vertex exact examples, approximate photographed table, meridians, inverse conversion, unchanged axis and invalid inputs");
+console.log("PASS: vertex exact references, same-plane passthrough, low-power conversion, meridians, inverse conversion, unchanged axis and invalid inputs");

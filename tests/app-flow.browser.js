@@ -250,7 +250,23 @@ const server = http.createServer(async (req, res) => {
         }
       }
     }
+    await page.locator("#calcSphere").fill("-10");
+    await page.locator("#calcCylinder").fill("0");
+    await page.locator("#calculatorForm button[type=submit]").click();
+    assert.equal(await page.locator("#calcVertex").innerText(), "-8.93 DS");
+    assert.match(await page.locator("#calcVertexPlanes").innerText(), /12 mm → 0 mm/);
+    await page.locator("#calcFromVertex").fill("0");
+    assert.equal(await page.locator("#calculatorResults").isVisible(), false);
+    await page.locator("#calcToVertex").fill("12");
+    await page.locator("#calculatorForm button[type=submit]").click();
+    assert.equal(await page.locator("#calcVertex").innerText(), "-11.36 DS");
+    await page.locator("#calcToVertex").fill("26");
+    await page.locator("#calculatorForm button[type=submit]").click();
+    assert.match(await page.locator("#calculatorError").innerText(), /0 to 25 mm/);
+    assert.equal(await page.locator("#calculatorResults").isVisible(), false);
     await page.locator("#calculatorReset").click();
+    assert.equal(await page.locator("#calcFromVertex").inputValue(), "12");
+    assert.equal(await page.locator("#calcToVertex").inputValue(), "0");
     assert.equal(await page.locator("#calcSphere").inputValue(), "");
     assert.equal(await page.locator("#calculatorResults").isVisible(), false);
     await page.locator("#calcSphere").fill("1.13");

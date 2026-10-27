@@ -138,7 +138,7 @@
           <span class="row-value"><input id="nearPoint" class="row-input num" type="text" inputmode="decimal" placeholder="—" aria-label="Near point in mm" /><span class="unit">mm</span></span>
         </label>
       </div>
-      <p class="group-footer">Vertex distance is the VD printed on the ticket. Near fields are optional and only feed the ADD estimate. Near point is the push-up blur point, measured through the distance correction.</p>
+      <p class="group-footer">Vertex distance is the VD printed on the ticket (0–25 mm; blank assumes 12 mm). Both principal meridians are normalized to the 12 mm spectacle plane before refraction analysis; this is not a contact lens conversion. Near fields are optional and only feed the ADD estimate. Near point is the push-up blur point, measured through the distance correction.</p>
 
       <details class="group disclosure" id="kSection">
         <summary class="row disclosure-row"><span class="row-label">Keratometry</span><span class="row-detail">Optional</span></summary>
@@ -214,8 +214,8 @@
   <section class="content calculator-panel" id="calculatorPanel" role="tabpanel" aria-labelledby="calculatorTab" tabindex="0" hidden>
     <div class="large-title">
       <p class="eyebrow">Optical essentials</p>
-      <h1>One Rx. Two perspectives.</h1>
-      <p class="title-sub">Transpose cylinder notation and find the spherical equivalent.</p>
+      <h1>Explore your prescription.</h1>
+      <p class="title-sub">Transpose cylinder notation, find the spherical equivalent and compensate vertex distance.</p>
     </div>
     <div class="calculator-layout">
       <section class="calculator-entry" aria-labelledby="calculatorInputTitle">
@@ -227,6 +227,11 @@
             <label for="calcCylinder">Cylinder <span>CYL · D</span><input id="calcCylinder" type="text" autocomplete="off" spellcheck="false" placeholder="+3.00" aria-describedby="calculatorError" /></label>
             <label for="calcAxis">Axis <span>1–180°</span><input id="calcAxis" type="text" inputmode="numeric" autocomplete="off" placeholder="90" aria-describedby="calculatorError axisHint" /></label>
           </div>
+          <div class="calculator-fields">
+            <label for="calcFromVertex">Source vertex <span>mm from cornea</span><input id="calcFromVertex" type="text" inputmode="decimal" value="12" aria-describedby="calculatorError vertexHint" /></label>
+            <label for="calcToVertex">Target vertex <span>mm from cornea</span><input id="calcToVertex" type="text" inputmode="decimal" value="0" aria-describedby="calculatorError vertexHint" /></label>
+          </div>
+          <p id="vertexHint" class="calculator-hint">12 → 0 mm matches the reference table: spectacles to corneal plane. Reverse the distances for the inverse conversion. Use measured distances when known.</p>
           <p id="axisHint" class="calculator-hint">For sphere only, enter 0 cylinder; no axis is needed.</p>
           <p id="calculatorError" class="calculator-error" role="status" aria-live="polite"></p>
           <button class="button-primary" type="submit">Calculate</button>
@@ -241,7 +246,7 @@
         </details>
       </section>
       <section class="calculator-output" aria-label="Calculation results" aria-live="polite" aria-atomic="true">
-        <div id="calculatorEmpty" class="calculator-empty"><span class="empty-symbol" aria-hidden="true">±</span><h2>A different notation.<br>The same optical power.</h2><p>Enter a prescription to see both results here.</p></div>
+        <div id="calculatorEmpty" class="calculator-empty"><span class="empty-symbol" aria-hidden="true">±</span><h2>A different notation.<br>The same optical power.</h2><p>Enter a prescription to see the calculations here.</p></div>
         <div id="calculatorResults" hidden>
           <p class="calculator-original">Original <span id="calcOriginal"></span></p>
           <div class="calculator-result">
@@ -255,6 +260,13 @@
             <h2 id="calcSE"></h2>
             <p class="calculator-hint">Nearest 0.25 D · halfway values toward more plus</p>
             <button id="copySE" class="quiet-button" type="button">Copy SE</button>
+          </div>
+          <div class="calculator-result">
+            <p class="eyebrow">03 / Vertex compensation</p>
+            <h2 id="calcVertex"></h2>
+            <p id="calcVertexPlanes" class="calculator-hint"></p>
+            <p id="calcVertexMeridians" class="calculator-hint"></p>
+            <p class="calculator-hint">Calculated powers shown to 0.01 D, before selection of available lens powers. Both principal meridians are converted; axis stays unchanged. This is an optical equivalent, not a contact lens fitting recommendation.</p>
           </div>
           <details class="calculation-details">
             <summary>How it’s calculated</summary>
@@ -288,6 +300,7 @@
     </form>
   </dialog>
 
+  <script src="js/vertex.js"></script>
   <script src="js/config.js"></script>
   <script src="js/algorithm.js"></script>
   <script src="js/config-v03.js"></script>

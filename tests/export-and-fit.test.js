@@ -13,7 +13,7 @@ const { spawnSync } = require("node:child_process");
 const root = path.resolve(__dirname, "..");
 const sandbox = { window: {} };
 vm.createContext(sandbox);
-for (const f of ["js/config.js", "js/algorithm.js", "js/config-v03.js", "js/engine-v03.js", "js/config-v04.js", "js/engine-v04.js", "js/scoring.js", "js/engines.js", "js/storage.js"]) {
+for (const f of ["js/vertex.js", "js/config.js", "js/algorithm.js", "js/config-v03.js", "js/engine-v03.js", "js/config-v04.js", "js/engine-v04.js", "js/scoring.js", "js/engines.js", "js/storage.js"]) {
   vm.runInContext(fs.readFileSync(path.join(root, f), "utf8"), sandbox, { filename: f });
 }
 const w = sandbox.window;

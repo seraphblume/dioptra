@@ -23,7 +23,7 @@ const vm = require("node:vm");
 const root = path.resolve(__dirname, "..");
 const sandbox = { window: {} };
 vm.createContext(sandbox);
-for (const file of ["js/config.js", "js/config-v03.js", "js/engine-v03.js"]) {
+for (const file of ["js/vertex.js", "js/config.js", "js/config-v03.js", "js/engine-v03.js"]) {
   vm.runInContext(fs.readFileSync(path.join(root, file), "utf8"), sandbox, { filename: file });
 }
 const cfg = sandbox.window.DIOPTRA_V03_CONFIG;

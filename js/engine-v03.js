@@ -96,19 +96,8 @@
 
   // ---------------------------------------------------------------- optics
 
-  // Effective power of a lens moved from one vertex distance to another (mm from the cornea).
-  function effectivePower(power, fromMm, toMm) {
-    const d = (fromMm - toMm) / 1000; // positive when the lens moves toward the eye
-    return power / (1 - d * power);
-  }
-
-  // Convert each principal meridian separately (optical cross), then rebuild S/C/A.
-  function convertVertex(rx, fromMm, toMm) {
-    if (fromMm == null || toMm == null || Math.abs(fromMm - toMm) < EPS) return { ...rx };
-    const axisMeridian = effectivePower(rx.sphere, fromMm, toMm);
-    const perpendicular = effectivePower(rx.sphere + rx.cylinder, fromMm, toMm);
-    return { sphere: axisMeridian, cylinder: perpendicular - axisMeridian, axis: rx.axis };
-  }
+  // Shared with the standalone calculator; retain full precision before vector averaging.
+  const { effectivePower, convertVertex } = window.DioptraVertex;
 
   // Astigmatism orientation from the minus-cylinder axis.
   function astigmatismOrientation(cylinder, axis) {

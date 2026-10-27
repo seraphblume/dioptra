@@ -29,3 +29,17 @@ Manufacturer trial-lens recommendations may already incorporate vertex conversio
 The approximately ±4 D fitting guideline concerns either principal meridian. It is not a mathematical threshold: the calculator retains exact compensation below it. Spherical equivalent is a separate approximation that removes astigmatic correction; it is not substituted for meridian-by-meridian conversion. Manufacturer multifocal additions, RGP tear-lens/base-curve adjustments, lens rotation and selection of available powers require separate fitting workflows. None changes the general refraction engine's spectacle-plane target or calibration.
 
 Only application code, synthetic checks and this implementation explanation accompany this update. No private notes, vault paths, source attachments or patient records are included.
+
+## Calculator workflow and refraction scope
+
+Calculators supports separate right-eye (OD) and left-eye (OS) inputs. Either eye may be left completely blank; a partially completed eye is rejected. Both eyes share explicit source/target distances and are calculated independently. No patient-case data is imported, saved or modified. A mode/input change invalidates results; a failed eye prevents any partial result from being presented as the completed calculation.
+
+- Spectacles → Contacts: enter the spectacle Rx and its measured vertex (default 12 mm); the corneal target is fixed at 0 mm.
+- Contacts → Spectacles: enter contact lens powers at 0 mm and the intended spectacle vertex (default 12 mm).
+- Custom: set both distances for a spectacle-fit change or an already-compensated power. This is axial compensation only, not a wrap/tilt/freeform lens-design calculation.
+
+Results label each eye and output plane, show the exact optical equivalent to 0.01 D, and separately show a nearest-quarter sphere/cylinder reference with ties toward more plus. This reference is mathematical rounding, not a brand's available powers or a fitting recommendation. The original-Rx transposition and spherical equivalent remain separate. Individual and combined conversion copies carry eye and plane labels.
+
+The main algorithm remains an autorefractor-to-spectacle estimate, normalized to its 12 mm output plane. Its ticket VD is the plane in which the device reports its powers; it is not an instruction to generate contacts. Changing this normalization would change the prediction target and invalidate calibration/comparison. No calibration, historical data, ADD or frozen engine behavior is changed by the calculator redesign.
+
+Illustrative checks use synthetic prescriptions and independently calculated optical values. No private source text or attachments are included. The approximate 4 D clinical guideline is checked per principal meridian; no fixed claim that every lower-power conversion is below 0.18 D is made. Available powers and fitting choices remain separate from the formula.

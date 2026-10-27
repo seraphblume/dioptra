@@ -96,7 +96,9 @@
 
   // ---------------------------------------------------------------- optics
 
-  // Shared with the standalone calculator; retain full precision before vector averaging.
+  // Normalize AR output to the configured spectacle plane before vector averaging.
+  // Spectacle/contact fitting conversions live in Calculators, not the prediction pipeline.
+  // Shared arithmetic retains full precision; never convert the predicted Rx to contacts here.
   const { effectivePower, convertVertex } = window.DioptraVertex;
 
   // Astigmatism orientation from the minus-cylinder axis.

@@ -239,6 +239,12 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("#calcSE").innerText(), "-0.50 D");
 
     await page.locator("#calculatorForm button[type=submit]").click();
+    await page.locator("#calcSphereOs").fill("6");
+    await page.locator("#calcCylinderOs").fill("0");
+    await page.locator("#calculatorForm button[type=submit]").click();
+    assert.equal(await page.locator("#calcVertexOs").innerText(), "+6.47 DS");
+    assert.equal(await page.locator("#calcTransposedOs").innerText(), "+6.00 DS");
+    assert.equal(await page.locator("#calcSEOs").innerText(), "+6.00 D");
     for (const colorScheme of ["light", "dark"]) {
       await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
       for (const width of [320, 390, 1280]) {
@@ -256,6 +262,20 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("#calcVertex").innerText(), "-8.93 DS");
     assert.match(await page.locator("#calcVertexPlanes").innerText(), /12 mm → 0 mm/);
     assert.match(await page.locator("#vertexAlreadyHint").innerText(), /do not apply it a second time/);
+    assert.equal(await page.locator("#calcToVertex").getAttribute("readonly"), "");
+    await page.evaluate(() => { navigator.clipboard.writeText = async text => { window.copiedText = text; }; });
+    await page.locator("#copyBothVertex").click();
+    assert.match(await page.evaluate(() => window.copiedText), /Right eye · OD: -8.93 DS\nLeft eye · OS: \+6.47 DS/);
+    await page.locator("#calcConversion").selectOption("contactsToSpectacles");
+    assert.equal(await page.locator("#calculatorResults").isVisible(), false);
+    assert.equal(await page.locator("#calcFromVertex").inputValue(), "0");
+    assert.equal(await page.locator("#calcFromVertex").getAttribute("readonly"), "");
+    assert.equal(await page.locator("#calcToVertex").inputValue(), "12");
+    await page.locator("#calculatorForm button[type=submit]").click();
+    assert.equal(await page.locator("#calcVertex").innerText(), "-11.36 DS");
+    assert.equal(await page.locator("#calcVertexOs").innerText(), "+5.60 DS");
+    assert.match(await page.locator("#calcVertexTitle").innerText(), /Spectacle-plane/);
+    await page.locator("#calcConversion").selectOption("custom");
     await page.locator("#calcFromVertex").fill("0");
     assert.equal(await page.locator("#calculatorResults").isVisible(), false);
     await page.locator("#calculatorForm button[type=submit]").click();
@@ -268,6 +288,25 @@ const server = http.createServer(async (req, res) => {
     await page.locator("#calculatorForm button[type=submit]").click();
     assert.match(await page.locator("#calculatorError").innerText(), /0 to 25 mm/);
     assert.equal(await page.locator("#calculatorResults").isVisible(), false);
+    await page.locator("#calcAxisOs").fill("181");
+    await page.locator("#calcCylinderOs").fill("-1");
+    await page.locator("#calcToVertex").fill("12");
+    await page.locator("#calculatorForm button[type=submit]").click();
+    assert.match(await page.locator("#calculatorError").innerText(), /Left eye · OS:.*1° to 180°/);
+    assert.equal(await page.locator("#calculatorResults").isVisible(), false);
+    await page.locator("#calculatorReset").click();
+    assert.equal(await page.locator("#calcConversion").inputValue(), "spectaclesToContacts");
+    assert.equal(await page.locator("#calcSphereOs").inputValue(), "");
+    // OS-only, toric second meridian above 4 D and no automatic spherical-equivalent substitution.
+    await page.locator("#calcSphereOs").fill("-2.75");
+    await page.locator("#calcCylinderOs").fill("-2");
+    await page.locator("#calcAxisOs").fill("180");
+    await page.locator("#calculatorForm button[type=submit]").click();
+    assert.equal(await page.locator("#calcEyeResults").isVisible(), false);
+    assert.equal(await page.locator("#calcVertexOs").innerText(), "-2.66 -1.83 × 180°");
+    assert.match(await page.locator("#calcVertexContextOs").innerText(), /At least one principal meridian/);
+    await page.locator("#useTransposedOs").click();
+    assert.equal(await page.locator("#calcSphereOs").inputValue(), "-4.75");
     await page.locator("#calculatorReset").click();
     assert.equal(await page.locator("#calcFromVertex").inputValue(), "12");
     assert.equal(await page.locator("#calcToVertex").inputValue(), "0");

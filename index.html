@@ -117,7 +117,7 @@
       <h2 class="group-header">Instrument &amp; near</h2>
       <div class="group">
         <label class="row">
-          <span class="row-label">Vertex distance</span>
+          <span class="row-label">AR output vertex</span>
           <span class="row-value"><input id="vertexMm" class="row-input num" type="text" inputmode="decimal" placeholder="12" /><span class="unit">mm</span></span>
         </label>
         <div class="row">
@@ -138,7 +138,7 @@
           <span class="row-value"><input id="nearPoint" class="row-input num" type="text" inputmode="decimal" placeholder="—" aria-label="Near point in mm" /><span class="unit">mm</span></span>
         </label>
       </div>
-      <p class="group-footer">Vertex distance is the VD printed on the ticket (0–25 mm; blank assumes 12 mm). Both principal meridians are normalized to the 12 mm spectacle plane before refraction analysis; this is not a contact lens conversion. Near fields are optional and only feed the ADD estimate. Near point is the push-up blur point, measured through the distance correction.</p>
+      <p class="group-footer">Enter the VD used for the autorefractor’s reported powers (0–25 mm; blank assumes 12 mm). The algorithm estimates a spectacle Rx at 12 mm; this field only normalizes the AR readings to that plane. Use Calculators for spectacle ↔ contact lens conversion. Near fields are optional and only feed the ADD estimate. Near point is the push-up blur point, measured through the distance correction.</p>
 
       <details class="group disclosure" id="kSection">
         <summary class="row disclosure-row"><span class="row-label">Keratometry</span><span class="row-detail">Optional</span></summary>
@@ -212,75 +212,77 @@
   </section>
 
   <section class="content calculator-panel" id="calculatorPanel" role="tabpanel" aria-labelledby="calculatorTab" tabindex="0" hidden>
-    <div class="large-title">
-      <p class="eyebrow">Optical essentials</p>
-      <h1>Explore your prescription.</h1>
-      <p class="title-sub">Transpose cylinder notation, find the spherical equivalent and compensate vertex distance.</p>
-    </div>
+    <div class="large-title"><p class="eyebrow">Optical essentials</p><h1>One prescription. Both eyes.</h1>
+    <p class="title-sub">Convert spectacle and contact lens powers, transpose notation and compare spherical equivalents.</p></div>
     <div class="calculator-layout">
-      <section class="calculator-entry" aria-labelledby="calculatorInputTitle">
-        <div class="section-heading"><h2 id="calculatorInputTitle">Original prescription</h2><button class="quiet-button" id="calculatorReset" type="button">Clear</button></div>
-        <p class="calculator-hint">Enter signed powers in diopters. Either cylinder notation works.</p>
-        <form id="calculatorForm" novalidate>
-          <div class="calculator-fields">
-            <label for="calcSphere">Sphere <span>SPH · D</span><input id="calcSphere" type="text" autocomplete="off" spellcheck="false" placeholder="−2.00" aria-describedby="calculatorError" /></label>
-            <label for="calcCylinder">Cylinder <span>CYL · D</span><input id="calcCylinder" type="text" autocomplete="off" spellcheck="false" placeholder="+3.00" aria-describedby="calculatorError" /></label>
-            <label for="calcAxis">Axis <span>1–180°</span><input id="calcAxis" type="text" inputmode="numeric" autocomplete="off" placeholder="90" aria-describedby="calculatorError axisHint" /></label>
-          </div>
-          <div class="calculator-fields">
-            <label for="calcFromVertex">Source vertex <span>mm from cornea</span><input id="calcFromVertex" type="text" inputmode="decimal" value="12" aria-describedby="calculatorError vertexHint vertexAlreadyHint" /></label>
-            <label for="calcToVertex">Target vertex <span>mm from cornea</span><input id="calcToVertex" type="text" inputmode="decimal" value="0" aria-describedby="calculatorError vertexHint vertexAlreadyHint" /></label>
-          </div>
-          <p id="vertexHint" class="calculator-hint">12 → 0 mm matches the reference table: spectacles to corneal plane. Reverse the distances for the inverse conversion. Use measured distances when known. Source means the plane where the entered power is currently expressed.</p>
-          <p id="vertexAlreadyHint" class="calculator-hint">Already compensated? Enter its current plane as the source (0 mm for a corneal-plane power). Manufacturer trial-lens tables may already include vertex compensation; do not apply it a second time.</p>
-          <p id="axisHint" class="calculator-hint">For sphere only, enter 0 cylinder; no axis is needed.</p>
-          <p id="calculatorError" class="calculator-error" role="status" aria-live="polite"></p>
-          <button class="button-primary" type="submit">Calculate</button>
-        </form>
-        <details class="calculator-paste">
-          <summary>Paste a prescription</summary>
-          <form id="calculatorPasteForm" class="paste-form" novalidate>
-            <label for="calculatorPaste">Sphere, cylinder × axis</label>
-            <div><input id="calculatorPaste" type="text" autocomplete="off" placeholder="−2.00 +3.00 × 90" aria-describedby="calculatorPasteError" /><button class="quiet-button" type="submit">Apply</button></div>
-            <p id="calculatorPasteError" class="calculator-error" role="status"></p>
-          </form>
-        </details>
-      </section>
-      <section class="calculator-output" aria-label="Calculation results" aria-live="polite" aria-atomic="true">
-        <div id="calculatorEmpty" class="calculator-empty"><span class="empty-symbol" aria-hidden="true">±</span><h2>A different notation.<br>The same optical power.</h2><p>Enter a prescription to see the calculations here.</p></div>
-        <div id="calculatorResults" hidden>
-          <p class="calculator-original">Original <span id="calcOriginal"></span></p>
-          <div class="calculator-result">
-            <p class="eyebrow">01 / Transposition</p>
-            <h2 id="calcTransposed"></h2>
-            <p id="calcNotation" class="calculator-hint"></p>
-            <div class="result-actions"><button id="copyTransposed" class="quiet-button" type="button">Copy Rx</button><button id="useTransposed" class="quiet-button" type="button">Use as input ↔</button></div>
-          </div>
-          <div class="calculator-result">
-            <p class="eyebrow">02 / Spherical equivalent</p>
-            <h2 id="calcSE"></h2>
-            <p class="calculator-hint">Nearest 0.25 D · halfway values toward more plus</p>
-            <button id="copySE" class="quiet-button" type="button">Copy SE</button>
-          </div>
-          <div class="calculator-result">
-            <p class="eyebrow">03 / Vertex compensation</p>
-            <h2 id="calcVertex"></h2>
-            <p id="calcVertexPlanes" class="calculator-hint"></p>
-            <p id="calcVertexContext" class="calculator-hint"></p>
-            <p id="calcVertexMeridians" class="calculator-hint"></p>
-            <p class="calculator-hint">Calculated powers shown to 0.01 D, before selection of available lens powers. Both principal meridians are converted; axis stays unchanged. The ±4.00 D fitting guideline applies to either principal meridian; mathematical compensation also exists below that level. This is an optical equivalent, not a contact lens fitting recommendation.</p>
-          </div>
-          <details class="calculation-details">
-            <summary>How it’s calculated</summary>
-            <dl id="calculatorMath"></dl>
-            <p id="calculatorRounding" class="calculator-hint"></p>
-            <p class="calculator-hint">Quarter-diopter bounds are mathematical references, not a prescribing recommendation.</p>
-          </details>
+    <section class="calculator-entry" aria-labelledby="calculatorInputTitle">
+      <div class="section-heading"><h2 id="calculatorInputTitle">Prescription</h2><button class="quiet-button" id="calculatorReset" type="button">Clear</button></div>
+      <form id="calculatorForm" novalidate>
+        <label class="calculator-mode" for="calcConversion">Conversion
+          <select id="calcConversion"><option value="spectaclesToContacts">Spectacles → Contacts</option><option value="contactsToSpectacles">Contacts → Spectacles</option><option value="custom">Custom vertex distances</option></select>
+        </label>
+        <p id="calcInputPlane" class="calculator-hint">Enter the spectacle prescription.</p>
+<fieldset class="calculator-eye"><legend>Right eye · OD</legend><div class="calculator-fields">
+ <label for="calcSphere">Sphere <span>SPH · D</span><input id="calcSphere" type="text" autocomplete="off" spellcheck="false" placeholder="−2.00" aria-describedby="calculatorError" /></label>
+ <label for="calcCylinder">Cylinder <span>CYL · D</span><input id="calcCylinder" type="text" autocomplete="off" spellcheck="false" placeholder="0.00" aria-describedby="calculatorError" /></label>
+ <label for="calcAxis">Axis <span>1–180°</span><input id="calcAxis" type="text" inputmode="numeric" autocomplete="off" placeholder="90" aria-describedby="calculatorError axisHint" /></label>
+ </div></fieldset><fieldset class="calculator-eye"><legend>Left eye · OS</legend><div class="calculator-fields">
+ <label for="calcSphereOs">Sphere <span>SPH · D</span><input id="calcSphereOs" type="text" autocomplete="off" spellcheck="false" placeholder="−2.00" aria-describedby="calculatorError" /></label>
+ <label for="calcCylinderOs">Cylinder <span>CYL · D</span><input id="calcCylinderOs" type="text" autocomplete="off" spellcheck="false" placeholder="0.00" aria-describedby="calculatorError" /></label>
+ <label for="calcAxisOs">Axis <span>1–180°</span><input id="calcAxisOs" type="text" inputmode="numeric" autocomplete="off" placeholder="90" aria-describedby="calculatorError axisHint" /></label>
+ </div></fieldset>
+        <p id="axisHint" class="calculator-hint">Either cylinder notation works. For sphere only, enter 0 cylinder; no axis is needed. Leave all three fields blank for an unused eye.</p>
+        <div class="calculator-fields vertex-fields">
+          <label for="calcFromVertex"><span id="calcFromLabel">Spectacle vertex</span><span>mm from cornea</span><input id="calcFromVertex" type="text" inputmode="decimal" value="12" aria-describedby="calculatorError vertexHint vertexAlreadyHint" /></label>
+          <label for="calcToVertex"><span id="calcToLabel">Contact lens plane</span><span>mm from cornea</span><input id="calcToVertex" type="text" inputmode="decimal" value="0" readonly aria-describedby="calculatorError vertexHint vertexAlreadyHint" /></label>
         </div>
-      </section>
-    </div>
+        <p id="vertexHint" class="calculator-hint">Use the measured spectacle vertex when known; 12 mm is the default. Contacts use 0 mm. The distances apply to both eyes.</p>
+        <p id="vertexAlreadyHint" class="calculator-hint">Manufacturer trial-lens tables may already include compensation; do not apply it a second time. Enter a power in the plane selected above.</p>
+        <p id="calculatorError" class="calculator-error" role="status" aria-live="polite"></p><button class="button-primary" type="submit">Calculate</button>
+      </form>
+      <details class="calculator-paste"><summary>Paste a prescription</summary><form id="calculatorPasteForm" class="paste-form" novalidate>
+      <label for="calculatorPasteEye">Eye</label><select id="calculatorPasteEye"><option value="od">Right eye · OD</option><option value="os">Left eye · OS</option></select>
+      <label for="calculatorPaste">Sphere, cylinder × axis</label><div><input id="calculatorPaste" type="text" autocomplete="off" placeholder="−2.00 +3.00 × 90" aria-describedby="calculatorPasteError" /><button class="quiet-button" type="submit">Apply</button></div><p id="calculatorPasteError" class="calculator-error" role="status"></p></form></details>
+    </section>
+    <section class="calculator-output" aria-label="Calculation results" aria-live="polite" aria-atomic="true">
+    <div id="calculatorEmpty" class="calculator-empty"><span class="empty-symbol" aria-hidden="true">↔</span><h2>Spectacles to contacts.<br>Or back again.</h2><p>Enter one or both eyes to see the optical equivalents.</p></div>
+    <div id="calculatorResults" hidden>
+      <h2 id="calcSummaryTitle">Contact-plane optical equivalents</h2>
+      <p id="calcSummaryPlanes" class="calculator-hint"></p>
+      <table class="conversion-summary" aria-label="Both-eye vertex conversion"><thead><tr><th scope="col">Eye</th><th scope="col">Computed · D</th><th scope="col">0.25 D reference</th></tr></thead><tbody>
+      <tr id="calcSummaryRow"><th scope="row">OD</th><td id="calcVertex"></td><td id="calcVertexRounded"></td></tr>
+      <tr id="calcSummaryRowOs"><th scope="row">OS</th><td id="calcVertexOs"></td><td id="calcVertexRoundedOs"></td></tr>
+      </tbody></table>
+      <div class="result-actions"><button id="copyBothVertex" class="quiet-button" type="button">Copy conversion results</button></div>
+<section id="calcEyeResults" class="calculator-eye-output" aria-label="Right eye · OD results" hidden>
+ <h2 class="eye-result-title">Right eye · OD</h2>
+ <p class="calculator-original">Input <span id="calcOriginal"></span></p>
+ <div class="calculator-result"><p class="eyebrow" id="calcVertexTitle">Vertex conversion</p>
+ <p id="calcVertexPlanes" class="calculator-hint"></p><p id="calcVertexContext" class="calculator-hint"></p>
+ <p id="calcVertexMeridians" class="calculator-hint"></p>
+ <button id="copyVertex" class="quiet-button" type="button">Copy conversion</button></div>
+ <div class="calculator-result"><p class="eyebrow">Transposition of input</p><h2 id="calcTransposed"></h2>
+ <p id="calcNotation" class="calculator-hint"></p><div class="result-actions"><button id="copyTransposed" class="quiet-button" type="button">Copy Rx</button><button id="useTransposed" class="quiet-button" type="button">Use as input ↔</button></div></div>
+ <div class="calculator-result"><p class="eyebrow">Spherical equivalent of input</p><h2 id="calcSE"></h2>
+ <p class="calculator-hint">Nearest 0.25 D · halfway values toward more plus</p><button id="copySE" class="quiet-button" type="button">Copy SE</button></div>
+ <details class="calculation-details"><summary>How it’s calculated</summary><dl id="calculatorMath"></dl><p id="calculatorRounding" class="calculator-hint"></p></details>
+ </section><section id="calcEyeResultsOs" class="calculator-eye-output" aria-label="Left eye · OS results" hidden>
+ <h2 class="eye-result-title">Left eye · OS</h2>
+ <p class="calculator-original">Input <span id="calcOriginalOs"></span></p>
+ <div class="calculator-result"><p class="eyebrow" id="calcVertexTitleOs">Vertex conversion</p>
+ <p id="calcVertexPlanesOs" class="calculator-hint"></p><p id="calcVertexContextOs" class="calculator-hint"></p>
+ <p id="calcVertexMeridiansOs" class="calculator-hint"></p>
+ <button id="copyVertexOs" class="quiet-button" type="button">Copy conversion</button></div>
+ <div class="calculator-result"><p class="eyebrow">Transposition of input</p><h2 id="calcTransposedOs"></h2>
+ <p id="calcNotationOs" class="calculator-hint"></p><div class="result-actions"><button id="copyTransposedOs" class="quiet-button" type="button">Copy Rx</button><button id="useTransposedOs" class="quiet-button" type="button">Use as input ↔</button></div></div>
+ <div class="calculator-result"><p class="eyebrow">Spherical equivalent of input</p><h2 id="calcSEOs"></h2>
+ <p class="calculator-hint">Nearest 0.25 D · halfway values toward more plus</p><button id="copySEOs" class="quiet-button" type="button">Copy SE</button></div>
+ <details class="calculation-details"><summary>How it’s calculated</summary><dl id="calculatorMathOs"></dl><p id="calculatorRoundingOs" class="calculator-hint"></p></details>
+ </section>
+      <p class="calculator-hint">Conversions show calculated powers to 0.01 D. Quarter-diopter references round sphere and cylinder separately, with halfway values toward more plus; they are not a selection of available lens powers. Axis stays unchanged. Spherical equivalent removes astigmatic correction.</p>
+    </div></section></div>
     <p id="calculatorStatus" class="calculator-status" role="status" aria-live="polite"></p>
-    <p class="footnote">An optical calculation, not a new prescription. Spherical equivalent does not retain astigmatic correction. This workspace does not read or save patient cases.</p>
+    <p class="footnote">Optical equivalents, not a contact lens prescription or fitting recommendation. Available powers, lens design, rotation and fit require separate assessment. This workspace does not read or save patient cases.</p>
   </section>
   </main>
 

@@ -783,3 +783,23 @@ body[data-view="calculator"] #toast { display: none; }
   .row { flex-wrap: wrap; }
   .row-value { min-width: 0; max-width: 100%; }
 }
+
+/* Prescription calculator: explicit planes and independently labelled eyes. */
+.calculator-eye { border: 0; padding: 0; margin: 28px 0 0; min-width: 0; }
+.calculator-eye legend, .eye-result-title { font-size: 17px; font-weight: 600; }
+.calculator-eye .calculator-fields { margin-top: 12px; }
+.calculator-mode { display: block; margin-top: 20px; font-size: 14px; }
+.calculator-mode select, #calculatorPasteEye { display: block; width: 100%; min-height: 48px; margin-top: 8px; padding: 10px; background: var(--bg); color: var(--label); border: 1px solid var(--separator); border-radius: 10px; font: inherit; }
+.vertex-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.vertex-fields label > span:first-child { font-size: 13px; color: var(--label); font-weight: 500; letter-spacing: normal; }
+.vertex-fields input[readonly] { color: var(--label-2); background: var(--cell); }
+.calculator-eye-output { margin-top: 24px; }
+.calculator-eye-output + .calculator-eye-output { border-top: 2px solid var(--separator); padding-top: 24px; margin-top: 36px; }
+
+.conversion-summary { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 20px 0; }
+.conversion-summary th, .conversion-summary td { padding: 14px 8px; text-align: left; border-bottom: 1px solid var(--separator); overflow-wrap: anywhere; }
+.conversion-summary th { color: var(--label-2); font-size: 12px; font-weight: 500; }
+.conversion-summary th:first-child { width: 40px; }
+.conversion-summary td { font: 15px/1.5 var(--mono); }
+.conversion-summary th[scope="row"] { color: var(--label); font-weight: 600; }
+#calcSummaryTitle { font: 400 24px/1.3 var(--serif); }

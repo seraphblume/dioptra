@@ -41,90 +41,128 @@
     $("calculatorError").textContent = "";
     $("calculatorStatus").textContent = "";
   }
-  function setInputs(rx) {
-    $("calcSphere").value = optics.formatPower(rx.sphere);
-    $("calcCylinder").value = optics.formatPower(rx.cylinder);
-    $("calcAxis").value = rx.axis ?? "";
+  const eyes = [{ key: "od", suffix: "", label: "Right eye · OD" }, { key: "os", suffix: "Os", label: "Left eye · OS" }];
+  const f = optics.formatPower;
+  const quarter = x => Math.round((x + Number.EPSILON) * 4) / 4;
+  const displayRx = rx => optics.formatRx({ ...rx, sphere: Math.round(rx.sphere * 100) / 100, cylinder: Math.round(rx.cylinder * 100) / 100 });
+  function setInputs(rx, suffix = "") {
+    $("calcSphere" + suffix).value = f(rx.sphere);
+    $("calcCylinder" + suffix).value = f(rx.cylinder);
+    $("calcAxis" + suffix).value = rx.axis ?? "";
   }
-  function show(next) {
-    const from = $("calcFromVertex").value.trim().replace(",", ".");
-    const to = $("calcToVertex").value.trim().replace(",", ".");
-    const converted = optics.convertVertex(next.original, from, to);
-    result = next;
-    const { original: o, transposed: t, se } = next;
-    const f = optics.formatPower;
-    $("calculatorError").textContent = "";
-    $("calculatorStatus").textContent = "";
-    $("calculatorEmpty").hidden = true;
-    $("calculatorResults").hidden = false;
-    $("calcOriginal").textContent = optics.formatRx(o);
-    $("calcTransposed").textContent = optics.formatRx(t);
-    $("calcNotation").textContent = t.cylinder === 0 ? "Sphere only · axis not applicable" : t.cylinder < 0 ? "Minus-cylinder notation" : "Plus-cylinder notation";
-    $("calcVertex").textContent = optics.formatRx({ ...converted,
-      sphere: Math.round(converted.sphere * 100) / 100,
-      cylinder: Math.round(converted.cylinder * 100) / 100 });
-    $("calcVertexContext").textContent = Number(from) === Number(to)
-      ? "Same source and target plane: no vertex compensation applied."
-      : "Compensation applied once from the entered source plane. Confirm that the input has not already been converted to the target plane.";
-    $("calcVertexPlanes").textContent = `${Number(from)} mm → ${Number(to)} mm from cornea`;
-    $("calcVertexMeridians").textContent = `Principal powers: ${converted.sphere.toFixed(2)} D / ${(converted.sphere + converted.cylinder).toFixed(2)} D`;
-    $("calcSE").textContent = `${f(next.roundedSE)} D`;
+  function mode() { return $("calcConversion").value; }
+  function configureMode() {
+    const m = mode(), reverse = m === "contactsToSpectacles", custom = m === "custom";
+    $("calcFromVertex").readOnly = reverse;
+    $("calcToVertex").readOnly = !reverse && !custom;
+    $("calcFromVertex").value = reverse ? "0" : "12";
+    $("calcToVertex").value = reverse ? "12" : "0";
+    $("calcFromLabel").textContent = custom ? "Source vertex" : reverse ? "Contact lens plane" : "Spectacle vertex";
+    $("calcToLabel").textContent = custom ? "Target vertex" : reverse ? "Spectacle vertex" : "Contact lens plane";
+    $("calcInputPlane").textContent = custom ? "Enter powers at the source vertex. Use this mode for a change in spectacle fit or a power already at the corneal plane." : reverse ? "Enter the contact lens power. The result is its spectacle-plane optical equivalent." : "Enter the spectacle prescription. The result is its corneal-plane optical equivalent.";
+    invalidate();
+  }
+  function readEyes() {
+    const next = {};
+    for (const eye of eyes) {
+      const values = ["calcSphere", "calcCylinder", "calcAxis"].map(id => $(id + eye.suffix).value);
+      if (values.every(v => !v.trim())) continue;
+      try { next[eye.key] = optics.calculate(...values); }
+      catch (error) { throw new Error(`${eye.label}: ${error.message}`); }
+    }
+    if (!Object.keys(next).length) throw new Error("Enter sphere and cylinder for at least one eye (use 0 cylinder for sphere only).");
+    return next;
+  }
+  function renderEye(eye, next, from, to) {
+    const get = id => $(id + eye.suffix);
+    const { original: o, transposed: t, se, converted } = next;
+    get("calcOriginal").textContent = optics.formatRx(o);
+    get("calcTransposed").textContent = optics.formatRx(t);
+    get("calcNotation").textContent = t.cylinder === 0 ? "Sphere only · axis not applicable" : t.cylinder < 0 ? "Minus-cylinder notation" : "Plus-cylinder notation";
+    get("calcVertexTitle").textContent = mode() === "custom" ? "Vertex optical equivalent" : mode() === "contactsToSpectacles" ? "Spectacle-plane optical equivalent" : "Contact-plane optical equivalent";
+    get("calcVertex").textContent = displayRx(converted);
+    get("calcVertexPlanes").textContent = `${Number(from)} mm → ${Number(to)} mm from cornea`;
+    const highPower = Math.max(Math.abs(o.sphere), Math.abs(o.sphere + o.cylinder)) >= 4;
+    get("calcVertexContext").textContent = Number(from) === Number(to) ? "Same source and target plane: no vertex compensation applied."
+      : highPower ? "At least one principal meridian is ±4.00 D or greater. Both meridians have been compensated."
+      : "Both principal meridians are below ±4.00 D. The exact mathematical conversion is still shown.";
+    get("calcVertexMeridians").textContent = `Principal powers: ${converted.sphere.toFixed(2)} D / ${(converted.sphere + converted.cylinder).toFixed(2)} D`;
+    get("calcVertexRounded").textContent = optics.formatRx({ ...converted, sphere: quarter(converted.sphere), cylinder: quarter(converted.cylinder) });
+    get("calcSE").textContent = `${f(next.roundedSE)} D`;
     const rows = [
       ["Vertex formula (each meridian)", "F₂ = F₁ / [1 − ((source mm − target mm) / 1000) × F₁]"],
+      ["Input principal powers", `${f(o.sphere)} D / ${f(o.sphere + o.cylinder)} D`],
       ["Sphere + cylinder", `${f(o.sphere)} + (${f(o.cylinder)}) = ${f(t.sphere)} D`],
       ["Reverse cylinder sign", `${f(o.cylinder)} → ${f(t.cylinder)} D`],
       ["Rotate axis by 90°", o.axis === null ? "Not applicable to a spherical lens" : `${o.axis}° → ${t.axis}°`],
       ["Exact spherical equivalent", `${f(o.sphere)} + (${f(o.cylinder)} ÷ 2) = ${f(se)} D`],
       ["Nearest 0.25 D", `${f(se)} D → ${f(next.roundedSE)} D (halfway values toward more plus)`]
     ];
-    $("calculatorMath").replaceChildren(...rows.flatMap(([label, value]) => {
+    get("calculatorMath").replaceChildren(...rows.flatMap(([label, value]) => {
       const dt = document.createElement("dt"); dt.textContent = label;
       const dd = document.createElement("dd"); dd.textContent = value;
       return [dt, dd];
     }));
-    $("calculatorRounding").textContent = next.lowerQuarter === next.upperQuarter
-      ? "Already an exact 0.25 D increment."
+    get("calculatorRounding").textContent = next.lowerQuarter === next.upperQuarter ? "Already an exact 0.25 D increment."
       : `Adjacent 0.25 D values: ${f(next.lowerQuarter)} D (more minus) and ${f(next.upperQuarter)} D (more plus).`;
   }
+  function show(next) {
+    const from = $("calcFromVertex").value.trim().replace(",", "."), to = $("calcToVertex").value.trim().replace(",", ".");
+    // Validate every entered eye and conversion before revealing any result.
+    for (const eye of eyes) if (next[eye.key]) next[eye.key].converted = optics.convertVertex(next[eye.key].original, from, to);
+    result = next;
+    $("calcSummaryTitle").textContent = mode() === "custom" ? "Vertex optical equivalents" : mode() === "contactsToSpectacles" ? "Spectacle-plane optical equivalents" : "Contact-plane optical equivalents";
+    $("calcSummaryPlanes").textContent = `${Number(from)} mm → ${Number(to)} mm from cornea · computed before lens selection`;
+    for (const eye of eyes) {
+      $("calcSummaryRow" + eye.suffix).hidden = !next[eye.key];
+      $("calcEyeResults" + eye.suffix).hidden = !next[eye.key];
+      if (next[eye.key]) renderEye(eye, next[eye.key], from, to);
+    }
+    $("calculatorError").textContent = "";
+    $("calculatorStatus").textContent = "";
+    $("calculatorEmpty").hidden = true;
+    $("calculatorResults").hidden = false;
+  }
   $("calculatorForm").addEventListener("submit", event => {
-    event.preventDefault();
-    invalidate();
-    try { show(optics.calculate($("calcSphere").value, $("calcCylinder").value, $("calcAxis").value)); }
-    catch (error) { $("calculatorError").textContent = error.message; }
+    event.preventDefault(); invalidate();
+    try { show(readEyes()); } catch (error) { $("calculatorError").textContent = error.message; }
   });
-  ["calcSphere", "calcCylinder", "calcAxis", "calcFromVertex", "calcToVertex"].forEach(id => $(id).addEventListener("input", invalidate));
+  for (const eye of eyes) for (const id of ["calcSphere", "calcCylinder", "calcAxis"]) $(id + eye.suffix).addEventListener("input", invalidate);
+  ["calcFromVertex", "calcToVertex"].forEach(id => $(id).addEventListener("input", invalidate));
+  $("calcConversion").addEventListener("change", configureMode);
   $("calculatorPasteForm").addEventListener("submit", event => {
-    event.preventDefault();
-    $("calculatorPasteError").textContent = "";
+    event.preventDefault(); $("calculatorPasteError").textContent = "";
     try {
       const parsed = optics.parse($("calculatorPaste").value);
-      setInputs(parsed.original);
-      show(parsed);
+      const eye = eyes.find(e => e.key === $("calculatorPasteEye").value);
+      setInputs(parsed.original, eye.suffix); invalidate(); show(readEyes());
     } catch (error) { $("calculatorPasteError").textContent = error.message; }
   });
   $("calculatorReset").addEventListener("click", () => {
-    $("calculatorForm").reset();
-    $("calculatorPasteForm").reset();
-    $("calculatorPasteError").textContent = "";
-    invalidate();
-    $("calcSphere").focus();
+    $("calculatorForm").reset(); $("calculatorPasteForm").reset();
+    $("calculatorPasteError").textContent = ""; configureMode(); $("calcSphere").focus();
   });
-  $("useTransposed").addEventListener("click", () => {
-    if (!result) return;
-    const rx = result.transposed;
-    setInputs(rx);
-    show(optics.calculate(rx.sphere, rx.cylinder, rx.axis));
-  });
-  async function copy(kind) {
-    if (!result) return;
-    const text = kind === "rx" ? optics.formatRx(result.transposed) : `${optics.formatPower(result.roundedSE)} D`;
-    try {
-      await navigator.clipboard.writeText(text);
-      $("calculatorStatus").textContent = `${kind === "rx" ? "Transposed Rx" : "Spherical equivalent"} copied.`;
-    } catch {
-      $("calculatorStatus").textContent = "Clipboard unavailable. Select and copy the displayed result manually.";
-    }
+  async function copyText(text, label) {
+    try { await navigator.clipboard.writeText(text); $("calculatorStatus").textContent = `${label} copied.`; }
+    catch { $("calculatorStatus").textContent = "Clipboard unavailable. Select and copy the displayed result manually."; }
   }
-  $("copyTransposed").addEventListener("click", () => copy("rx"));
-  $("copySE").addEventListener("click", () => copy("se"));
+  for (const eye of eyes) {
+    $("useTransposed" + eye.suffix).addEventListener("click", () => {
+      if (!result?.[eye.key]) return;
+      setInputs(result[eye.key].transposed, eye.suffix); invalidate();
+      try { show(readEyes()); } catch (error) { $("calculatorError").textContent = error.message; }
+    });
+    for (const [id, kind] of [["copyTransposed", "rx"], ["copySE", "se"], ["copyVertex", "vertex"]]) $(id + eye.suffix).addEventListener("click", () => {
+      const r = result?.[eye.key]; if (!r) return;
+      const text = kind === "rx" ? optics.formatRx(r.transposed) : kind === "se" ? `${f(r.roundedSE)} D` : `${eye.label}: ${displayRx(r.converted)} (${$("calcFromVertex").value} mm → ${$("calcToVertex").value} mm)`;
+      copyText(text, kind === "rx" ? "Transposed Rx" : kind === "se" ? "Spherical equivalent" : "Conversion");
+    });
+  }
+  $("copyBothVertex").addEventListener("click", () => {
+    if (!result) return;
+    const plane = `${$("calcFromVertex").value} mm → ${$("calcToVertex").value} mm`;
+    const lines = eyes.filter(e => result[e.key]).map(e => `${e.label}: ${displayRx(result[e.key].converted)}`);
+    copyText([`Optical equivalents (${plane})`, ...lines].join("\n"), "Conversion results");
+  });
+  configureMode();
 })();

@@ -91,3 +91,11 @@ assert.throws(() => vertex.effectivePower(Infinity, 12, 0));
 assert.throws(() => vertex.convertVertex({sphere: 0, cylinder: NaN}, 12, 12));
 assert.equal(require("../js/optical-calculators.js").convertVertex, vertex.convertVertex);
 console.log("PASS: vertex exact references, same-plane passthrough, low-power conversion, meridians, inverse conversion, unchanged axis and invalid inputs");
+
+// Worked optical examples: full precision and 13 mm toric conversion (not direct cylinder conversion).
+close(vertex.effectivePower(-6, 12, 0), -750 / 134);
+close(vertex.effectivePower(6, 12, 0), 750 / 116);
+const toric13 = vertex.convertVertex({ sphere: -5, cylinder: -2.25, axis: 180 }, 13, 0);
+close(toric13.sphere, -1000 / 213);
+close(toric13.sphere + toric13.cylinder, -29000 / 4377);
+assert.equal(toric13.axis, 180);
